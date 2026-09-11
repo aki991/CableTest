@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>CableTest</AssemblyName>
+    <RootNamespace>CableTest.App</RootNamespace>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CableTest.Core\CableTest.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Šablon mora biti pored izvršnog fajla: templates\MASTER.c61 -->
+    <Content Include="..\templates\MASTER.c61" Link="templates\MASTER.c61">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

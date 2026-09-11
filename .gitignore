@@ -1,0 +1,28 @@
+# Rezultati build-a
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Baza aplikacije se pravi pri pokretanju, ne ide u repozitorijum
+cabletest.db
+cabletest.db-shm
+cabletest.db-wal
+
+# Generisani spec fajlovi i rezultati iz pogona
+*.c61.bak
+TestResults/
+
+# Windows
+Thumbs.db
+desktop.ini

@@ -1,0 +1,12 @@
+# Podrazumevano: Git normalizuje prelome redova, radna kopija je CRLF (projekat je Windows-only).
+* text=auto eol=crlf
+
+# .c61 test programi se NE diraju. Fajl mora ostati bajt-identičan onome što je snimio
+# CableConnector — svaka izmena preloma redova ili kodiranja ruši šablon i generisani spec.
+*.c61 -text -diff
+
+# Slike i binarni sadržaj
+*.png binary
+*.jpg binary
+*.ico binary
+*.db binary
