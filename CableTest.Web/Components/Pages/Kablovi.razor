@@ -1,0 +1,114 @@
+@page "/kablovi"
+@inject TestingService Testing
+
+@* Ceo katalog kablova na jednom mestu, sa mapom portova svakog kabla. *@
+
+<PageTitle>CableTest — Kablovi</PageTitle>
+
+<div class="strana">
+    <div class="strana-zaglavlje">
+        <h1>Kablovi</h1>
+        <p>Kablovski setovi iz kataloga, sa net listom i portovima testera koje koriste.</p>
+    </div>
+
+    <div class="panel">
+        <div class="trazi" style="max-width:620px">
+            <span class="trazi-polje">
+                <Ikona Naziv="lupa" />
+                <input type="search" placeholder="Pretraga po oznaci, nazivu ili vozilu…"
+                       value="@_filter" @oninput="e => _filter = e.Value?.ToString() ?? string.Empty" />
+            </span>
+            <select style="width:220px; flex:none" value="@_vehicleId" @onchange="OnVehicleChanged">
+                <option value="0">Sva vozila</option>
+                @foreach (Vehicle vehicle in _vehicles)
+                {
+                    <option value="@vehicle.Id">@vehicle.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="tabela-okvir">
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Oznaka</th>
+                        <th>Vozilo</th>
+                        <th>Naziv</th>
+                        <th class="desno">Netova</th>
+                        <th class="desno">Tačaka</th>
+                        <th>Portovi</th>
+                        <th>Test program</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Filtrirani.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" style="color:var(--tekst-3); text-align:center; padding:22px">
+                                Nema kabla koji odgovara pretrazi.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (Cable cable in Filtrirani)
+                        {
+                            <tr>
+                                <td><strong>@cable.Code</strong></td>
+                                <td>@ImeVozila(cable.VehicleId)</td>
+                                <td>@(string.IsNullOrWhiteSpace(cable.Description) ? "—" : cable.Description)</td>
+                                <td class="desno">@cable.Nets.Count</td>
+                                <td class="desno">@CableLayout.CountPoints(cable)</td>
+                                <td class="jednoprostorni">@CableLayout.PortLetters(cable)</td>
+                                <td class="jednoprostorni">@cable.SpecFileNameWithExtension</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private IReadOnlyList<Vehicle> _vehicles = Array.Empty<Vehicle>();
+    private IReadOnlyList<Cable> _cables = Array.Empty<Cable>();
+    private string _filter = string.Empty;
+    private long _vehicleId;
+
+    protected override void OnInitialized()
+    {
+        _vehicles = Testing.AllVehicles;
+        _cables = Testing.AllCables;
+    }
+
+    private void OnVehicleChanged(ChangeEventArgs e)
+        => _vehicleId = long.TryParse(e.Value?.ToString(), out long id) ? id : 0;
+
+    private string ImeVozila(long id) => _vehicles.FirstOrDefault(v => v.Id == id)?.Name ?? "—";
+
+    private IReadOnlyList<Cable> Filtrirani
+    {
+        get
+        {
+            IEnumerable<Cable> kablovi = _cables;
+
+            if (_vehicleId > 0)
+            {
+                kablovi = kablovi.Where(c => c.VehicleId == _vehicleId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_filter))
+            {
+                string trazeno = _filter.Trim();
+
+                kablovi = kablovi.Where(c =>
+                    c.Code.Contains(trazeno, StringComparison.OrdinalIgnoreCase)
+                    || c.Description.Contains(trazeno, StringComparison.OrdinalIgnoreCase)
+                    || ImeVozila(c.VehicleId).Contains(trazeno, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return kablovi.ToArray();
+        }
+    }
+}

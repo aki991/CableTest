@@ -13,7 +13,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- WPF SDK iz podrazumevanih using-a izbacuje System.IO; vraćamo ga, jer se radi sa fajlovima. -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\CableTest.Core\CableTest.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Znak firme se ugrađuje u .exe: aplikacija se pokreće i kad se pored nje ne kopira ništa. -->
+    <Resource Include="..\logo.png" Link="logo.png" />
   </ItemGroup>
 
   <ItemGroup>

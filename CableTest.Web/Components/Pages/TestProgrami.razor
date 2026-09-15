@@ -1,0 +1,118 @@
+@page "/test-programi"
+@inject TestingService Testing
+
+@* Spisak test programa (.c61). Jedan kabl — jedan fajl; ime fajla je jedina veza između rezultata
+   iz CSV-a i kabla u bazi, pa se ovde vidi tačno kako se koji zove. *@
+
+<PageTitle>CableTest — Test programi</PageTitle>
+
+<div class="strana">
+    <div class="strana-zaglavlje">
+        <h1>Test programi</h1>
+        <p>
+            Jedan kabl — jedan .c61 fajl. Program se upisuje u spec folder sa ekrana „Ispitivanje",
+            dugmetom <em>Pripremi test program</em>.
+        </p>
+    </div>
+
+    <div class="plocice">
+        <div class="plocica">
+            <div class="plocica-naslov"><Ikona Naziv="program" /> Programa u katalogu</div>
+            <div class="plocica-broj">@_cables.Count</div>
+            <div class="plocica-opis">po jedan za svaki kabl</div>
+        </div>
+        <div class="plocica">
+            <div class="plocica-naslov"><Ikona Naziv="fascikla" /> Spec folder</div>
+            <div class="plocica-opis" style="margin-top:12px; overflow-wrap:anywhere">
+                @Testing.Settings.SpecFolder
+            </div>
+        </div>
+        <div class="plocica">
+            <div class="plocica-naslov"><Ikona Naziv="oznaka" /> Šablon</div>
+            <div class="plocica-opis" style="margin-top:12px; overflow-wrap:anywhere">
+                @(string.IsNullOrWhiteSpace(Testing.Settings.TemplatePath)
+                    ? @"templates\MASTER.c61 (pored programa)"
+                    : Testing.Settings.TemplatePath)
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="trazi" style="max-width:420px">
+            <span class="trazi-polje">
+                <Ikona Naziv="lupa" />
+                <input type="search" placeholder="Pretraga po imenu programa ili kablu…"
+                       value="@_filter" @oninput="e => _filter = e.Value?.ToString() ?? string.Empty" />
+            </span>
+        </div>
+
+        <div class="tabela-okvir">
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Fajl test programa</th>
+                        <th>Kabl</th>
+                        <th>Vozilo</th>
+                        <th class="desno">Netova</th>
+                        <th>Portovi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Filtrirani.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" style="color:var(--tekst-3); text-align:center; padding:22px">
+                                Nema programa koji odgovara pretrazi.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (Cable cable in Filtrirani)
+                        {
+                            <tr>
+                                <td class="jednoprostorni"><strong>@cable.SpecFileNameWithExtension</strong></td>
+                                <td>@cable.Code</td>
+                                <td>@ImeVozila(cable.VehicleId)</td>
+                                <td class="desno">@cable.Nets.Count</td>
+                                <td class="jednoprostorni">@CableLayout.PortLetters(cable)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private IReadOnlyList<Vehicle> _vehicles = Array.Empty<Vehicle>();
+    private IReadOnlyList<Cable> _cables = Array.Empty<Cable>();
+    private string _filter = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _vehicles = Testing.AllVehicles;
+        _cables = Testing.AllCables;
+    }
+
+    private string ImeVozila(long id) => _vehicles.FirstOrDefault(v => v.Id == id)?.Name ?? "—";
+
+    private IReadOnlyList<Cable> Filtrirani
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_filter))
+            {
+                return _cables;
+            }
+
+            string trazeno = _filter.Trim();
+
+            return _cables
+                .Where(c => c.SpecFileName.Contains(trazeno, StringComparison.OrdinalIgnoreCase)
+                            || c.Code.Contains(trazeno, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+    }
+}

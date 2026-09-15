@@ -1,0 +1,1163 @@
+/*
+   Izgled CableTest aplikacije — tamna „radionička" tema.
+
+   Ekran stoji ceo radni dan iznad ispitnog stola, često pored jakog svetla, i operater ga gleda
+   sa dva-tri koraka. Otuda tamna podloga, krupan tekst i jedno jedino mesto koje sme da bude
+   svetlo i šareno: veliki prikaz ishoda. Sve ostalo je namerno prigušeno, da PASS/FAIL nikad
+   nema takmaca u vidnom polju.
+
+   Boje ishoda: PASS zelena, FAIL crvena, čekanje siva. Uz boju UVEK ide i krupan tekst —
+   boja sama nije dovoljna (daltonizam).
+*/
+
+:root {
+    /* Podloge */
+    --pozadina: #0B1512;
+    --meni: #091210;
+    --zaglavlje-1: #0F1D18;
+    --zaglavlje-2: #14241D;
+    --panel: #111F1A;
+    --panel-2: #16261F;
+    --panel-3: #1A2E26;
+
+    /* Ivice */
+    --ivica: #1E332C;
+    --ivica-jaka: #27443A;
+
+    /* Tekst */
+    --tekst: #E4EFEA;
+    --tekst-2: #93ABA3;
+    --tekst-3: #6A827B;
+
+    /* Naglasak */
+    --zelena: #2CC96B;
+    --zelena-jaka: #4AE188;
+    --zelena-prigusena: #12351F;
+
+    /* Ishodi */
+    --prosao: #3FDD7B;
+    --prosao-pozadina: #0E3A20;
+    --prosao-ivica: #1E7A43;
+    --pao: #FF5069;
+    --pao-pozadina: #3C1119;
+    --pao-ivica: #8E2433;
+    --ceka: #9FB3AC;
+    --ceka-pozadina: #14211C;
+    --ceka-ivica: #27443A;
+
+    /* Poruke */
+    --greska: #FF6B7D;
+    --greska-pozadina: #2E1015;
+    --upozorenje: #F0C158;
+    --upozorenje-pozadina: #2C2410;
+    --demo: #8B5CF6;
+    --demo-pozadina: #211640;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    font-family: "Segoe UI", "Inter", Arial, sans-serif;
+    font-size: 15px;
+    color: var(--tekst);
+    background: var(--pozadina);
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: inherit;
+}
+
+/* Ikone su ugrađeni SVG bez sopstvenih dimenzija — bez ovoga bi ih pretraživač crtao 300×150. */
+.ikona {
+    width: 20px;
+    height: 20px;
+    flex: none;
+}
+
+/* =====================================================================================
+   LJUSKA: zaglavlje, bočni meni, radna površina
+   ===================================================================================== */
+
+.ljuska {
+    display: grid;
+    grid-template-rows: 76px 1fr;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ------------------------------- Zaglavlje ------------------------------- */
+
+.zaglavlje {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0 24px;
+    background: linear-gradient(100deg, var(--zaglavlje-1) 0%, var(--zaglavlje-2) 55%, #0D1A16 100%);
+    border-bottom: 1px solid var(--ivica);
+    overflow: hidden;
+}
+
+/* Kose pruge u pozadini zaglavlja — isti motiv kao na znaku firme. */
+.zaglavlje::after {
+    content: "";
+    position: absolute;
+    top: -40px;
+    right: 18%;
+    width: 46%;
+    height: 200%;
+    background: repeating-linear-gradient(
+        104deg,
+        rgba(255, 255, 255, 0.045) 0px,
+        rgba(255, 255, 255, 0.045) 3px,
+        transparent 3px,
+        transparent 26px);
+    pointer-events: none;
+}
+
+.zaglavlje > * {
+    position: relative;
+    z-index: 1;
+}
+
+.znak {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    text-decoration: none;
+}
+
+/* Znak je crn na providnoj podlozi; na tamnom zaglavlju se prevodi u belo. */
+.znak img {
+    height: 42px;
+    width: auto;
+    filter: brightness(0) invert(1);
+    opacity: 0.92;
+}
+
+.pregrada {
+    width: 1px;
+    height: 34px;
+    background: var(--ivica-jaka);
+}
+
+.marka {
+    font-size: 25px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: #FFFFFF;
+}
+
+.zaglavlje-razmak {
+    flex: 1;
+}
+
+.pilula {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 16px;
+    border: 1px solid var(--ivica-jaka);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.tackica {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--tekst-3);
+    flex: none;
+}
+
+.tackica.radi {
+    background: var(--zelena-jaka);
+    box-shadow: 0 0 0 3px rgba(74, 225, 136, 0.18);
+}
+
+.tackica.stoji {
+    background: var(--greska);
+    box-shadow: 0 0 0 3px rgba(255, 107, 125, 0.18);
+}
+
+.operater {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 14px;
+    color: var(--tekst-2);
+    white-space: nowrap;
+}
+
+.operater svg {
+    width: 17px;
+    height: 17px;
+    flex: none;
+}
+
+/* ------------------------------- Telo ------------------------------- */
+
+.telo {
+    display: grid;
+    grid-template-columns: 224px 1fr;
+    min-height: 0;
+}
+
+/* ------------------------------- Bočni meni ------------------------------- */
+
+.meni {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--meni);
+    border-right: 1px solid var(--ivica);
+    padding: 12px 0;
+    overflow: hidden;
+}
+
+.stavka {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 18px;
+    border-left: 3px solid transparent;
+    color: var(--tekst-2);
+    font-size: 15.5px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.stavka svg {
+    width: 21px;
+    height: 21px;
+    flex: none;
+}
+
+.stavka:hover {
+    background: rgba(255, 255, 255, 0.035);
+    color: var(--tekst);
+}
+
+/* Blazor sam dodaje klasu „active" na NavLink koji odgovara adresi. */
+.stavka.active {
+    background: linear-gradient(90deg, rgba(44, 201, 107, 0.16) 0%, rgba(44, 201, 107, 0.02) 100%);
+    border-left-color: var(--zelena);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.stavka.active svg {
+    color: var(--zelena-jaka);
+}
+
+/* Vodeni žig na dnu menija — isti znak, jedva vidljiv. */
+.meni-zig {
+    margin-top: auto;
+    padding: 0 18px 10px;
+    opacity: 0.06;
+    pointer-events: none;
+}
+
+.meni-zig img {
+    width: 100%;
+    filter: brightness(0) invert(1);
+}
+
+/* ------------------------------- Radna površina ------------------------------- */
+
+.radna-povrsina {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+.sadrzaj {
+    flex: 1;
+    padding: 20px 24px;
+    overflow: auto;
+    min-height: 0;
+}
+
+/* =====================================================================================
+   KARTICE
+   ===================================================================================== */
+
+.kolone {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1fr) minmax(380px, 1.35fr);
+    gap: 20px;
+    height: 100%;
+    min-height: 0;
+}
+
+.kartica {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+    padding: 18px 20px 20px;
+    background: var(--panel);
+    border: 1px solid var(--ivica);
+    border-radius: 12px;
+}
+
+.kartica-naslov {
+    position: relative;
+    margin: 0 0 18px;
+    padding-bottom: 12px;
+    font-size: 23px;
+    font-weight: 600;
+    color: #FFFFFF;
+    border-bottom: 1px solid var(--ivica);
+}
+
+/* Kose crtice u desnom uglu naslova — ponavljanje motiva sa znaka. */
+.kartica-naslov::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 12px;
+    width: 34px;
+    height: 12px;
+    background: repeating-linear-gradient(
+        104deg,
+        var(--ivica-jaka) 0px,
+        var(--ivica-jaka) 3px,
+        transparent 3px,
+        transparent 8px);
+}
+
+.kartica-telo {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+    flex: 1;
+}
+
+.odeljak {
+    background: var(--panel-2);
+    border: 1px solid var(--ivica);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.odeljak-naslov {
+    margin: 0;
+    padding: 12px 16px;
+    background: var(--panel-3);
+    border-bottom: 1px solid var(--ivica);
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--tekst);
+}
+
+.odeljak-telo {
+    padding: 14px 16px;
+}
+
+/* Glavno dugme kartice stoji uz dno, i kad iznad njega ostane praznog prostora. */
+.kartica-telo > .dugme.veliko:last-child {
+    margin-top: auto;
+}
+
+/* =====================================================================================
+   POLJA ZA UNOS
+   ===================================================================================== */
+
+.oznaka {
+    display: block;
+    margin: 0 0 7px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--tekst-2);
+}
+
+select, input[type="text"], input[type="search"] {
+    width: 100%;
+    padding: 11px 13px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--tekst);
+    background: var(--panel-2);
+    border: 1px solid var(--ivica-jaka);
+    border-radius: 8px;
+    outline: none;
+}
+
+select {
+    /* Strelicu crta pretraživač; bela na tamnoj podlozi zahteva color-scheme. */
+    color-scheme: dark;
+    cursor: pointer;
+}
+
+select:focus, input:focus {
+    border-color: var(--zelena);
+    box-shadow: 0 0 0 3px rgba(44, 201, 107, 0.14);
+}
+
+.trazi {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.trazi-polje {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.trazi-polje svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 17px;
+    height: 17px;
+    color: var(--tekst-3);
+    pointer-events: none;
+}
+
+.trazi-polje input {
+    padding-left: 37px;
+}
+
+.barkod {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    flex: none;
+    background: var(--panel-2);
+    border: 1px solid var(--ivica-jaka);
+    border-radius: 8px;
+    color: var(--tekst-2);
+    cursor: pointer;
+}
+
+.barkod:hover {
+    color: var(--tekst);
+    border-color: var(--zelena);
+}
+
+.barkod svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* =====================================================================================
+   SPISAK KABLOVA
+   ===================================================================================== */
+
+/* Deo kartice koji uzima preostalu visinu; unutra se listše, spolja se ne raste. */
+.rastegljivo {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.spisak {
+    flex: 1;
+    min-height: 140px;
+    background: var(--panel-2);
+    border: 1px solid var(--ivica);
+    border-radius: 10px;
+    overflow: auto;
+}
+
+.spisak-zaglavlje {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 20px;
+    gap: 10px;
+    padding: 11px 14px;
+    background: var(--panel-3);
+    border-bottom: 1px solid var(--ivica);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--tekst-2);
+}
+
+.red-kabla {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 20px;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    padding: 13px 14px;
+    border: none;
+    border-left: 3px solid transparent;
+    border-bottom: 1px solid rgba(30, 51, 44, 0.6);
+    background: transparent;
+    color: var(--tekst-2);
+    font-family: inherit;
+    font-size: 14.5px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.red-kabla:hover {
+    background: rgba(255, 255, 255, 0.035);
+    color: var(--tekst);
+}
+
+.red-kabla.izabran {
+    background: linear-gradient(90deg, rgba(44, 201, 107, 0.18) 0%, rgba(44, 201, 107, 0.04) 100%);
+    border-left-color: var(--zelena);
+    color: #FFFFFF;
+}
+
+.red-kabla .oznaka-kabla {
+    font-weight: 600;
+    color: var(--tekst);
+}
+
+.red-kabla.izabran .oznaka-kabla {
+    color: #FFFFFF;
+}
+
+.red-kabla svg {
+    width: 16px;
+    height: 16px;
+    opacity: 0.5;
+}
+
+.prazno {
+    padding: 22px 14px;
+    color: var(--tekst-3);
+    font-size: 14px;
+    text-align: center;
+}
+
+/* =====================================================================================
+   DETALJI KABLA
+   ===================================================================================== */
+
+.podaci {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 9px 18px;
+    font-size: 14.5px;
+}
+
+.podaci dt {
+    color: var(--tekst-2);
+    white-space: nowrap;
+}
+
+.podaci dd {
+    margin: 0;
+    font-weight: 600;
+    color: var(--tekst);
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.podaci dd.jednoprostorni {
+    font-family: Consolas, "Courier New", monospace;
+}
+
+.jednoprostorni {
+    font-family: Consolas, "Courier New", monospace;
+}
+
+/* =====================================================================================
+   MAPA PINOVA
+   ===================================================================================== */
+
+.pinovi {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+}
+
+.pin {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 0 7px;
+    border: 1px solid var(--ivica-jaka);
+    border-radius: 8px;
+    background: var(--panel-3);
+    color: var(--tekst-3);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.pin.koriscen {
+    background: linear-gradient(180deg, #1F7E46 0%, #176237 100%);
+    border-color: #2AA25C;
+    color: #FFFFFF;
+}
+
+.pin-tacka {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4A5C57;
+}
+
+.pin.koriscen .pin-tacka {
+    background: var(--zelena-jaka);
+}
+
+.legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--tekst-2);
+}
+
+.legenda span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.legenda i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #4A5C57;
+}
+
+.legenda i.koriscen {
+    background: var(--zelena-jaka);
+}
+
+/* =====================================================================================
+   DUGMAD I PORUKE
+   ===================================================================================== */
+
+.dugme {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--tekst);
+    background: var(--panel-3);
+    border: 1px solid var(--ivica-jaka);
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.dugme:hover:not(:disabled):not(.onemoguceno) {
+    border-color: var(--zelena);
+    color: #FFFFFF;
+}
+
+.dugme svg {
+    width: 20px;
+    height: 20px;
+    flex: none;
+}
+
+.dugme.veliko {
+    width: 100%;
+    padding: 17px 20px;
+    font-size: 18px;
+}
+
+.dugme.glavno {
+    background: linear-gradient(180deg, #2A4A3B 0%, #1E3A2D 100%);
+    border-color: #2F6B4A;
+    color: #FFFFFF;
+}
+
+.dugme.glavno:hover:not(:disabled) {
+    background: linear-gradient(180deg, #2FA35F 0%, #23834B 100%);
+    border-color: var(--zelena-jaka);
+}
+
+.dugme:disabled, .dugme.onemoguceno {
+    color: var(--tekst-3);
+    background: var(--panel-2);
+    border-color: var(--ivica);
+    cursor: default;
+}
+
+.poruka {
+    padding: 11px 13px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.poruka.uspeh {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--zelena-prigusena);
+    border: 1px solid var(--prosao-ivica);
+    color: #BEEFCF;
+}
+
+.poruka.uspeh svg {
+    width: 19px;
+    height: 19px;
+    flex: none;
+    color: var(--zelena-jaka);
+}
+
+.poruka.greska {
+    background: var(--greska-pozadina);
+    border: 1px solid var(--pao-ivica);
+    color: var(--greska);
+}
+
+/* =====================================================================================
+   VELIKI PRIKAZ ISHODA
+   ===================================================================================== */
+
+.ishod {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    padding: 30px 24px;
+    border-radius: 12px;
+    border: 1px solid var(--ceka-ivica);
+    background: var(--ceka-pozadina);
+    color: var(--ceka);
+}
+
+.ishod.prosao {
+    background: var(--prosao-pozadina);
+    border-color: var(--prosao-ivica);
+    color: var(--prosao);
+}
+
+.ishod.pao {
+    background: var(--pao-pozadina);
+    border-color: var(--pao-ivica);
+    color: var(--pao);
+}
+
+.ishod-znak {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 92px;
+    height: 92px;
+    flex: none;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.ishod-znak svg {
+    width: 54px;
+    height: 54px;
+    color: var(--prosao-pozadina);
+}
+
+.ishod.pao .ishod-znak svg {
+    color: var(--pao-pozadina);
+}
+
+.ishod.ceka .ishod-znak {
+    background: transparent;
+    border: 3px solid currentColor;
+}
+
+.ishod.ceka .ishod-znak svg {
+    color: currentColor;
+    width: 46px;
+    height: 46px;
+}
+
+.ishod-tekst {
+    min-width: 0;
+}
+
+.ishod-oznaka {
+    display: block;
+    font-size: clamp(38px, 4.6vw, 74px);
+    font-weight: 700;
+    line-height: 1.02;
+    letter-spacing: 1px;
+}
+
+.ishod.ceka .ishod-oznaka {
+    font-size: clamp(22px, 2.2vw, 34px);
+    letter-spacing: 0.5px;
+}
+
+.ishod-opis {
+    display: block;
+    margin-top: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    opacity: 0.85;
+}
+
+/* Podaci ispod velikog prikaza */
+.ishod-podaci {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    padding: 16px 4px;
+    border-bottom: 1px solid var(--ivica);
+}
+
+.ishod-podaci > div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    color: var(--tekst-2);
+}
+
+.ishod-podaci svg {
+    width: 19px;
+    height: 19px;
+    flex: none;
+    color: var(--tekst-3);
+}
+
+.ishod-podaci strong {
+    color: var(--tekst);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.ishod-napomena {
+    padding: 10px 13px;
+    border-radius: 8px;
+    background: var(--upozorenje-pozadina);
+    border: 1px solid #4A3C14;
+    color: var(--upozorenje);
+    font-size: 13px;
+}
+
+/* =====================================================================================
+   TABELE
+   ===================================================================================== */
+
+.tabela-okvir {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    border: 1px solid var(--ivica);
+    border-radius: 10px;
+}
+
+table.tabela {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+table.tabela th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 11px 14px;
+    background: var(--panel-3);
+    border-bottom: 1px solid var(--ivica);
+    color: var(--tekst-2);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+}
+
+table.tabela td {
+    padding: 11px 14px;
+    border-bottom: 1px solid rgba(30, 51, 44, 0.6);
+    color: var(--tekst);
+}
+
+table.tabela tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+table.tabela td.jednoprostorni {
+    font-family: Consolas, "Courier New", monospace;
+}
+
+table.tabela td.desno, table.tabela th.desno {
+    text-align: right;
+}
+
+.stanje-oznaka {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.stanje-oznaka.prosao {
+    color: var(--prosao);
+}
+
+.stanje-oznaka.pao {
+    color: var(--pao);
+}
+
+.stanje-oznaka.ceka {
+    color: var(--tekst-3);
+}
+
+.stanje-oznaka svg {
+    width: 16px;
+    height: 16px;
+}
+
+.naslov-tabele {
+    margin: 16px 0 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tekst-2);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+/* =====================================================================================
+   TRAKE: demo, problem, podnožje
+   ===================================================================================== */
+
+.demo-traka {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 11px 24px;
+    background: var(--demo-pozadina);
+    border-bottom: 1px solid #3B2A6B;
+    color: #DDD0FF;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.demo-traka .demo-tekst {
+    flex: 1;
+}
+
+.demo-dugmad {
+    display: flex;
+    gap: 8px;
+}
+
+.problem {
+    padding: 11px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: pre-wrap;
+}
+
+.problem.greska {
+    background: var(--greska-pozadina);
+    border-bottom: 1px solid var(--pao-ivica);
+    color: var(--greska);
+}
+
+.problem.upozorenje {
+    background: var(--upozorenje-pozadina);
+    border-bottom: 1px solid #4A3C14;
+    color: var(--upozorenje);
+}
+
+.podnozje {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    padding: 11px 24px;
+    background: var(--meni);
+    border-top: 1px solid var(--ivica);
+    font-size: 13.5px;
+    color: var(--tekst-2);
+    white-space: nowrap;
+}
+
+.podnozje .stavka-stanja {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+.podnozje .stavka-stanja svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    color: var(--tekst-3);
+}
+
+.podnozje .skracen {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.podnozje-razmak {
+    flex: 1;
+    min-width: 0;
+}
+
+.podnozje .crta {
+    width: 1px;
+    height: 18px;
+    background: var(--ivica-jaka);
+}
+
+.podnozje b {
+    color: var(--tekst);
+}
+
+.podnozje b.prosao {
+    color: var(--prosao);
+}
+
+.podnozje b.pao {
+    color: var(--pao);
+}
+
+/* =====================================================================================
+   PROSTE STRANICE (Vozila, Kablovi, Test programi, Istorija, Podešavanja)
+   ===================================================================================== */
+
+.strana {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    height: 100%;
+    min-height: 0;
+}
+
+.strana-zaglavlje h1 {
+    margin: 0 0 5px;
+    font-size: 26px;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+.strana-zaglavlje p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--tekst-2);
+}
+
+.plocice {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.plocica {
+    padding: 18px 20px;
+    background: var(--panel);
+    border: 1px solid var(--ivica);
+    border-radius: 12px;
+}
+
+.plocica-naslov {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+.plocica-naslov svg {
+    width: 21px;
+    height: 21px;
+    color: var(--zelena-jaka);
+}
+
+.plocica-broj {
+    margin-top: 12px;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--zelena-jaka);
+}
+
+.plocica-opis {
+    margin-top: 3px;
+    font-size: 13.5px;
+    color: var(--tekst-2);
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+    padding: 18px 20px 20px;
+    background: var(--panel);
+    border: 1px solid var(--ivica);
+    border-radius: 12px;
+}
+
+/* =====================================================================================
+   UŽI EKRAN
+   ===================================================================================== */
+
+@media (max-width: 1400px) {
+    .kolone {
+        grid-template-columns: minmax(260px, 0.9fr) minmax(300px, 1fr);
+    }
+
+    .kolone > .kartica:nth-child(3) {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 1000px) {
+    .telo {
+        grid-template-columns: 74px 1fr;
+    }
+
+    .stavka {
+        justify-content: center;
+        padding: 15px 0;
+    }
+
+    .stavka span {
+        display: none;
+    }
+
+    .meni-zig {
+        display: none;
+    }
+
+    .kolone {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .kartica {
+        height: auto;
+    }
+
+    .podnozje {
+        flex-wrap: wrap;
+        white-space: normal;
+    }
+}

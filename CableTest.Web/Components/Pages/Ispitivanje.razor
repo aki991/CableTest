@@ -1,0 +1,403 @@
+@page "/"
+@implements IDisposable
+@inject TestingService Testing
+@inject IJSRuntime JS
+
+@* Glavni ekran — „Ispitivanje". Tri koraka sleva nadesno, redom kojim ih operater i radi:
+   izbor kabla, priprema test programa, ishod. *@
+
+<PageTitle>CableTest — Ispitivanje</PageTitle>
+
+<div class="kolone">
+
+    @* ==========================================================================
+       1. IZBOR KABLA
+       ========================================================================== *@
+    <section class="kartica">
+        <h1 class="kartica-naslov">1. Izbor kabla</h1>
+
+        <div class="kartica-telo">
+            <div>
+                <label class="oznaka" for="vozilo">Vozilo</label>
+                <select id="vozilo" value="@Testing.SelectedVehicleId" @onchange="OnVehicleChanged">
+                    @foreach (Vehicle vehicle in Testing.Vehicles)
+                    {
+                        <option value="@vehicle.Id">@vehicle.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="rastegljivo">
+                <div class="trazi">
+                    <span class="trazi-polje">
+                        <Ikona Naziv="lupa" />
+                        <input type="search" id="trazi-kabl" placeholder="Pretraga po oznaci ili nazivu…"
+                               value="@_filter" @oninput="OnFilterChanged" />
+                    </span>
+                    <button type="button" class="barkod" title="Skeniraj barkod — skener upisuje oznaku u polje za pretragu"
+                            @onclick="FocusSearchAsync">
+                        <Ikona Naziv="barkod" />
+                    </button>
+                </div>
+
+                <div class="spisak">
+                    <div class="spisak-zaglavlje">
+                        <span>Oznaka</span>
+                        <span>Naziv</span>
+                        <span></span>
+                    </div>
+
+                    @if (FilteredCables.Count == 0)
+                    {
+                        <div class="prazno">Nema kabla koji odgovara pretrazi.</div>
+                    }
+                    else
+                    {
+                        @foreach (Cable cable in FilteredCables)
+                        {
+                            <button type="button"
+                                    class="red-kabla @(cable.Id == Testing.SelectedCableId ? "izabran" : null)"
+                                    @onclick="() => Testing.SelectCable(cable.Id)">
+                                <span class="oznaka-kabla">@cable.Code</span>
+                                <span>@(string.IsNullOrWhiteSpace(cable.Description) ? "—" : cable.Description)</span>
+                                <Ikona Naziv="strelica" />
+                            </button>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ==========================================================================
+       2. TEST PROGRAM
+       ========================================================================== *@
+    <section class="kartica">
+        <h1 class="kartica-naslov">2. Test program</h1>
+
+        <div class="kartica-telo">
+
+            <div class="odeljak">
+                <h2 class="odeljak-naslov">Podaci o kablu</h2>
+                <div class="odeljak-telo">
+                    <dl class="podaci">
+                        <dt>Oznaka kabla:</dt>
+                        <dd>@(Testing.SelectedCable?.Code ?? "—")</dd>
+
+                        <dt>Naziv:</dt>
+                        <dd>@Naziv</dd>
+
+                        <dt>Broj netova:</dt>
+                        <dd>@Testing.SelectedNetCount</dd>
+
+                        <dt>Broj ispitnih tačaka:</dt>
+                        <dd>@Testing.SelectedPointCount</dd>
+
+                        <dt>Broj portova:</dt>
+                        <dd>@Testing.SelectedPortCount</dd>
+
+                        <dt>Fajl test programa:</dt>
+                        <dd class="jednoprostorni">@Testing.SelectedSpecFileText</dd>
+                    </dl>
+
+                    @if (Testing.HasPrepareMessage)
+                    {
+                        <div class="poruka uspeh" style="margin-top:14px">
+                            <Ikona Naziv="krug-potvrda" />
+                            <span>@Testing.PrepareMessage</span>
+                        </div>
+                    }
+
+                    @if (Testing.HasPrepareError)
+                    {
+                        <div class="poruka greska" style="margin-top:14px">@Testing.PrepareError</div>
+                    }
+                </div>
+            </div>
+
+            <div class="odeljak">
+                <h2 class="odeljak-naslov">Konektor / mapa pinova</h2>
+                <div class="odeljak-telo">
+                    <div class="pinovi">
+                        @foreach (PortUsage port in Testing.Ports)
+                        {
+                            <div class="pin @(port.Used ? "koriscen" : null)"
+                                 title="@port.Description">
+                                @port.Letter
+                                <span class="pin-tacka"></span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="legenda">
+                        <span><i class="koriscen"></i> Koristi ovaj kabl</span>
+                        <span><i></i> Ne koristi se</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="dugme veliko glavno" disabled="@(!Testing.HasSelectedCable || _preparing)"
+                    @onclick="PrepareAsync">
+                <Ikona Naziv="pokreni" />
+                @(_preparing ? "Priprema u toku…" : "Pripremi test program")
+            </button>
+        </div>
+    </section>
+
+    @* ==========================================================================
+       3. REZULTAT
+       ========================================================================== *@
+    <section class="kartica">
+        <h1 class="kartica-naslov">3. Rezultat</h1>
+
+        <div class="kartica-telo">
+
+            <div class="ishod @OutcomeClass">
+                <span class="ishod-znak">
+                    <Ikona Naziv="@OutcomeIcon" />
+                </span>
+                <span class="ishod-tekst">
+                    <span class="ishod-oznaka">@OutcomeText</span>
+                    <span class="ishod-opis">@Testing.OutcomeSubText</span>
+                </span>
+            </div>
+
+            @if (Testing.HasResult)
+            {
+                <div class="ishod-podaci">
+                    <div><Ikona Naziv="sat" /><span>Vreme testa:</span> <strong>@Testing.ResultTimeText</strong></div>
+                    <div><Ikona Naziv="kabl" /><span>Kabl:</span> <strong>@Testing.ResultCableText</strong></div>
+                    <div><Ikona Naziv="operater" /><span>Operater:</span> <strong>@Testing.ResultOperatorText</strong></div>
+                </div>
+            }
+
+            @if (Testing.HasBackfillNotice)
+            {
+                <div class="ishod-napomena">@Testing.BackfillNoticeText</div>
+            }
+
+            @if (Testing.HasResult && Testing.ResultDefects.Count > 0)
+            {
+                <div class="odeljak">
+                    <h2 class="odeljak-naslov">Pronađene greške</h2>
+                    <div class="odeljak-telo">
+                        <ul style="margin:0; padding-left:20px">
+                            @foreach (string defect in Testing.ResultDefects)
+                            {
+                                <li style="color:var(--pao); margin:3px 0">@defect</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+
+            <div class="naslov-tabele">Net lista izabranog kabla</div>
+
+            <div class="tabela-okvir">
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>Net</th>
+                            <th>Od</th>
+                            <th>Do</th>
+                            <th class="desno">Tačaka</th>
+                            <th>Stanje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Testing.NetRows.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" style="color:var(--tekst-3); text-align:center; padding:22px">
+                                    Izaberi kabl da bi se prikazala net lista.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (NetRow row in Testing.NetRows)
+                            {
+                                <tr title="@row.Description">
+                                    <td>@row.Ordinal</td>
+                                    <td class="jednoprostorni">@row.From</td>
+                                    <td class="jednoprostorni">@row.To</td>
+                                    <td class="desno">@row.PointCount</td>
+                                    <td>
+                                        <span class="stanje-oznaka @StanjeKlasa(row.Status)">
+                                            <Ikona Naziv="@StanjeIkona(row.Status)" />
+                                            @row.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Testing.HasResult)
+            {
+                <a class="dugme veliko" href="/merna-karta" target="_blank" rel="noopener">
+                    <Ikona Naziv="program" /> Merna karta
+                </a>
+            }
+            else
+            {
+                <span class="dugme veliko onemoguceno">
+                    <Ikona Naziv="program" /> Merna karta
+                </span>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    private IJSObjectReference? _sounds;
+    private bool _preparing;
+    private string _filter = string.Empty;
+
+    private string OutcomeClass => Testing.Outcome switch
+    {
+        OutcomeState.Pass => "prosao",
+        OutcomeState.Fail => "pao",
+        _ => "ceka"
+    };
+
+    // Veliki prikaz je na srpskom, kao i ceo ekran; „PASS"/„FAIL" ostaje samo u CSV-u testera.
+    private string OutcomeText => Testing.Outcome switch
+    {
+        OutcomeState.Pass => "PROŠAO",
+        OutcomeState.Fail => "PAO",
+        _ => TestingService.WaitingText
+    };
+
+    private string OutcomeIcon => Testing.Outcome switch
+    {
+        OutcomeState.Pass => "potvrda",
+        OutcomeState.Fail => "uzvicnik",
+        _ => "sat"
+    };
+
+    private string Naziv => string.IsNullOrWhiteSpace(Testing.SelectedCable?.Description)
+        ? "—"
+        : Testing.SelectedCable!.Description;
+
+    /// <summary>Kablovi izabranog vozila, suženi tekstom iz polja za pretragu.</summary>
+    private IReadOnlyList<Cable> FilteredCables
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_filter))
+            {
+                return Testing.Cables;
+            }
+
+            string trazeno = _filter.Trim();
+
+            return Testing.Cables
+                .Where(c => c.Code.Contains(trazeno, StringComparison.OrdinalIgnoreCase)
+                            || c.Description.Contains(trazeno, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+    }
+
+    private static string StanjeKlasa(string status) => status switch
+    {
+        "PROŠAO" => "prosao",
+        "PAO" => "pao",
+        _ => "ceka"
+    };
+
+    private static string StanjeIkona(string status) => status switch
+    {
+        "PROŠAO" => "krug-potvrda",
+        "PAO" => "uzvicnik",
+        _ => "sat"
+    };
+
+    protected override void OnInitialized()
+    {
+        Testing.Changed += OnChanged;
+        Testing.ResultArrived += OnResultArrived;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Testing.SoundEnabled)
+        {
+            _sounds = await JS.InvokeAsync<IJSObjectReference>("import", "/sounds.js");
+        }
+    }
+
+    private void OnVehicleChanged(ChangeEventArgs e)
+    {
+        _filter = string.Empty;
+        Testing.SelectVehicle(ParseId(e.Value));
+    }
+
+    private void OnFilterChanged(ChangeEventArgs e) => _filter = e.Value?.ToString() ?? string.Empty;
+
+    // Skener barkoda se ponaša kao tastatura: upisuje očitanu oznaku u polje koje je u fokusu.
+    private async Task FocusSearchAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("cableTestFocus", "trazi-kabl");
+        }
+        catch (JSException)
+        {
+            // Fokus nije presudan za rad ekrana.
+        }
+    }
+
+    private static long? ParseId(object? value)
+        => long.TryParse(value?.ToString(), out long id) ? id : null;
+
+    private async Task PrepareAsync()
+    {
+        _preparing = true;
+
+        try
+        {
+            await Testing.PrepareTestAsync();
+        }
+        finally
+        {
+            _preparing = false;
+        }
+    }
+
+    // Servis okida događaje sa pozadinske niti — iscrtavanje mora nazad na nit kola (circuit).
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    // Operater ne gleda ekran u trenutku kada test završi — ruke su mu na kablu. Zvuk je zato
+    // ravnopravan sa bojom, a ne ukras. Ovde ga pušta pretraživač, jer server nema zvučnik.
+    private void OnResultArrived(bool passed) => _ = InvokeAsync(() => PlaySoundAsync(passed));
+
+    private async Task PlaySoundAsync(bool passed)
+    {
+        if (_sounds is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _sounds.InvokeVoidAsync(passed ? "playPass" : "playFail");
+        }
+        catch (JSException)
+        {
+            // Zvuk je propao (pretraživač ga još nije dozvolio) — prikaz rezultata zbog toga ne sme da stane.
+        }
+        catch (JSDisconnectedException)
+        {
+            // Kartica je zatvorena u međuvremenu.
+        }
+    }
+
+    public void Dispose()
+    {
+        Testing.Changed -= OnChanged;
+        Testing.ResultArrived -= OnResultArrived;
+    }
+}

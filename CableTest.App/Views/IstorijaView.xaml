@@ -1,0 +1,196 @@
+<UserControl x:Class="CableTest.App.Views.IstorijaView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="800" d:DesignWidth="1200">
+
+    <!-- Istorija izvršenih testova. Ovde ulaze i zatečeni rezultati koji se ne prikazuju na
+         glavnom ekranu — istorija je dokaz da je kabl ispitan i mora da bude potpuna. -->
+
+    <Grid Margin="24,20,24,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Text="Istorija" Style="{StaticResource NaslovStraneStyle}" />
+            <TextBlock Text="Poslednjih 200 testova, najnoviji prvi."
+                       Style="{StaticResource OpisStraneStyle}" />
+        </StackPanel>
+
+        <!-- ================= PLOČICE ================= -->
+        <UniformGrid Grid.Row="1" Rows="1" Margin="0,0,0,18">
+            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource IvicaBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="20,18" Margin="0,0,16,0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaIstorija}"
+                              Width="21" Height="21" Stroke="{StaticResource AkcenatJakBrush}"
+                              VerticalAlignment="Center" Margin="0,0,11,0" />
+                        <TextBlock Text="Danas" FontSize="18" FontWeight="SemiBold"
+                                   Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding TodayTotal}" FontSize="30" FontWeight="Bold"
+                               Foreground="{StaticResource AkcenatJakBrush}" Margin="0,12,0,0" />
+                    <TextBlock Text="izvršenih testova" FontSize="13.5"
+                               Foreground="{StaticResource Tekst2Brush}" Margin="0,3,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource IvicaBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="20,18" Margin="0,0,16,0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaKrugPotvrda}"
+                              Width="21" Height="21" Stroke="{StaticResource PassBrush}"
+                              VerticalAlignment="Center" Margin="0,0,11,0" />
+                        <TextBlock Text="Prošlo" FontSize="18" FontWeight="SemiBold"
+                                   Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding TodayPassed}" FontSize="30" FontWeight="Bold"
+                               Foreground="{StaticResource PassBrush}" Margin="0,12,0,0" />
+                    <TextBlock Text="danas" FontSize="13.5"
+                               Foreground="{StaticResource Tekst2Brush}" Margin="0,3,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource IvicaBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="20,18">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaUzvicnik}"
+                              Width="21" Height="21" Stroke="{StaticResource FailBrush}"
+                              VerticalAlignment="Center" Margin="0,0,11,0" />
+                        <TextBlock Text="Palo" FontSize="18" FontWeight="SemiBold"
+                                   Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding TodayFailed}" FontSize="30" FontWeight="Bold"
+                               Foreground="{StaticResource FailBrush}" Margin="0,12,0,0" />
+                    <TextBlock Text="danas" FontSize="13.5"
+                               Foreground="{StaticResource Tekst2Brush}" Margin="0,3,0,0" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- ================= TABELA ================= -->
+        <Border Grid.Row="2" Background="{StaticResource PanelBrush}"
+                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1"
+                CornerRadius="12" Padding="20,18,20,20">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="Izvršeni testovi" Style="{StaticResource SectionTitleStyle}" />
+
+                <Border BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1" CornerRadius="10">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Background="{StaticResource Panel3Brush}"
+                                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="0,0,0,1"
+                                CornerRadius="10,10,0,0" Padding="14,11">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Vreme" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                <TextBlock Grid.Column="1" Text="Redni broj" Style="{StaticResource ZaglavljeTabeleStyle}"
+                                           TextAlignment="Right" Margin="0,0,14,0" />
+                                <TextBlock Grid.Column="2" Text="Test program" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                <TextBlock Grid.Column="3" Text="Kabl" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                <TextBlock Grid.Column="4" Text="Operater" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                <TextBlock Grid.Column="5" Text="Grešaka" Style="{StaticResource ZaglavljeTabeleStyle}"
+                                           TextAlignment="Right" Margin="0,0,14,0" />
+                                <TextBlock Grid.Column="6" Text="Ishod" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                            </Grid>
+                        </Border>
+
+                        <Grid>
+                            <TextBlock Text="Istorija je prazna — nijedan rezultat još nije stigao sa testera."
+                                       Foreground="{StaticResource Tekst3Brush}" FontSize="14"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20"
+                                       Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding Rows}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="#26FFFFFF" BorderThickness="0,0,0,1"
+                                                    Padding="14,11" ToolTip="{Binding RawRow}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="180" />
+                                                        <ColumnDefinition Width="110" />
+                                                        <ColumnDefinition Width="180" />
+                                                        <ColumnDefinition Width="140" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="100" />
+                                                        <ColumnDefinition Width="140" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock Grid.Column="0" Text="{Binding TimeText}"
+                                                               Style="{StaticResource CelijaStyle}" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding Seq}"
+                                                               Style="{StaticResource CelijaStyle}"
+                                                               TextAlignment="Right" Margin="0,0,14,0" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding SpecFileName}"
+                                                               Style="{StaticResource CelijaJednoprostornaStyle}" />
+                                                    <TextBlock Grid.Column="3" Text="{Binding CableCode}"
+                                                               Style="{StaticResource CelijaStyle}" />
+                                                    <TextBlock Grid.Column="4" Text="{Binding Operator}"
+                                                               Style="{StaticResource CelijaStyle}" />
+                                                    <TextBlock Grid.Column="5" Text="{Binding DefectCount}"
+                                                               Style="{StaticResource CelijaStyle}"
+                                                               TextAlignment="Right" Margin="0,0,14,0" />
+
+                                                    <StackPanel Grid.Column="6" Orientation="Horizontal">
+                                                        <Path Width="15" Height="15" Stretch="Uniform"
+                                                              StrokeThickness="1.8" StrokeStartLineCap="Round"
+                                                              StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                              VerticalAlignment="Center" Margin="0,0,7,0">
+                                                            <Path.Style>
+                                                                <Style TargetType="Path">
+                                                                    <Setter Property="Data" Value="{StaticResource IkonaUzvicnik}" />
+                                                                    <Setter Property="Stroke" Value="{StaticResource FailBrush}" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Passed}" Value="True">
+                                                                            <Setter Property="Data" Value="{StaticResource IkonaKrugPotvrda}" />
+                                                                            <Setter Property="Stroke" Value="{StaticResource PassBrush}" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Path.Style>
+                                                        </Path>
+
+                                                        <TextBlock Text="{Binding OutcomeText}" FontSize="14"
+                                                                   FontWeight="SemiBold" VerticalAlignment="Center">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="{StaticResource FailBrush}" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Passed}" Value="True">
+                                                                            <Setter Property="Foreground" Value="{StaticResource PassBrush}" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </DockPanel>
+                </Border>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

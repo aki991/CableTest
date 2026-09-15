@@ -1,0 +1,124 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject TestingService Testing
+
+@* Okvir aplikacije: zaglavlje sa znakom firme, bočni meni i traka stanja u podnožju.
+
+   Traka stanja stoji u okviru, a ne na pojedinačnom ekranu, jer nadgledanje testera teče i dok
+   operater gleda Istoriju ili Podešavanja — a ako je nešto s njim krenulo naopako, to mora da se
+   vidi sa svakog ekrana, ne samo sa ekrana „Ispitivanje". *@
+
+<div class="ljuska">
+
+    @* ================= ZAGLAVLJE ================= *@
+    <header class="zaglavlje">
+        <a class="znak" href="/">
+            <img src="logo.png" alt="Borbeni složeni sistemi" />
+            <span class="pregrada"></span>
+            <span class="marka">CableTest</span>
+        </a>
+
+        <span class="zaglavlje-razmak"></span>
+
+        <span class="pilula">
+            <span class="tackica @(Testing.ConnectionOk ? "radi" : "stoji")"></span>
+            @Testing.ConnectionText
+        </span>
+
+        <span class="operater">
+            <Ikona Naziv="operater" />
+            Operater: @Testing.OperatorDisplayName
+        </span>
+    </header>
+
+    <div class="telo">
+
+        @* ================= BOČNI MENI ================= *@
+        <nav class="meni">
+            <NavLink class="stavka" href="" Match="NavLinkMatch.All">
+                <Ikona Naziv="ispitivanje" /><span>Ispitivanje</span>
+            </NavLink>
+            <NavLink class="stavka" href="vozila">
+                <Ikona Naziv="vozilo" /><span>Vozila</span>
+            </NavLink>
+            <NavLink class="stavka" href="kablovi">
+                <Ikona Naziv="kabl" /><span>Kablovi</span>
+            </NavLink>
+            <NavLink class="stavka" href="test-programi">
+                <Ikona Naziv="program" /><span>Test programi</span>
+            </NavLink>
+            <NavLink class="stavka" href="istorija">
+                <Ikona Naziv="istorija" /><span>Istorija</span>
+            </NavLink>
+            <NavLink class="stavka" href="podesavanja">
+                <Ikona Naziv="podesavanja" /><span>Podešavanja</span>
+            </NavLink>
+
+            <div class="meni-zig">
+                <img src="logo.png" alt="" />
+            </div>
+        </nav>
+
+        <div class="radna-povrsina">
+
+            @* ================= DEMO TRAKA ================= *@
+            @if (Testing.IsDemoMode)
+            {
+                <div class="demo-traka">
+                    <span class="demo-tekst">@Testing.DemoBannerText</span>
+                    <span class="demo-dugmad">
+                        <button class="dugme" disabled="@(!Testing.CanSimulate)" @onclick="() => Testing.Simulate(true)">
+                            Simuliraj PROŠAO
+                        </button>
+                        <button class="dugme" disabled="@(!Testing.CanSimulate)" @onclick="() => Testing.Simulate(false)">
+                            Simuliraj PAO
+                        </button>
+                    </span>
+                </div>
+            }
+
+            @* ================= PROBLEM ================= *@
+            @if (Testing.HasProblem)
+            {
+                <div class="problem @(Testing.ProblemIsError ? "greska" : "upozorenje")">@Testing.ProblemText</div>
+            }
+
+            <main class="sadrzaj">
+                @Body
+            </main>
+
+            @* ================= TRAKA STANJA ================= *@
+            <footer class="podnozje">
+                <span class="stavka-stanja">
+                    <span class="tackica @(Testing.IsMonitoring ? "radi" : "stoji")"></span>
+                    @(Testing.IsMonitoring ? "Nadgledanje je aktivno" : "Nadgledanje nije pokrenuto")
+                </span>
+
+                <span class="stavka-stanja podnozje-razmak">
+                    <Ikona Naziv="fascikla" />
+                    <span class="skracen" title="@Testing.WatchedFileText">@Testing.WatchedFileText</span>
+                </span>
+
+                <span class="stavka-stanja">
+                    <Ikona Naziv="osvezi" />
+                    Poslednja promena: @Testing.LastChangeText
+                </span>
+
+                <span class="crta"></span>
+
+                <span class="stavka-stanja">Testova danas: <b>@Testing.TodayTotal</b></span>
+                <span class="stavka-stanja">Prošlo: <b class="prosao">@Testing.TodayPassed</b></span>
+                <span class="stavka-stanja">Palo: <b class="pao">@Testing.TodayFailed</b></span>
+            </footer>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized() => Testing.Changed += OnChanged;
+
+    // Servis okida događaje sa pozadinske niti — iscrtavanje mora nazad na nit kola (circuit).
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Testing.Changed -= OnChanged;
+}

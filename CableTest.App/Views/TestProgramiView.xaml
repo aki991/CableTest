@@ -1,0 +1,151 @@
+<UserControl x:Class="CableTest.App.Views.TestProgramiView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="800" d:DesignWidth="1200">
+
+    <!-- Spisak test programa (.c61). Jedan kabl — jedan fajl; ime fajla je jedina veza između
+         rezultata iz CSV-a i kabla u bazi, pa se ovde vidi tačno kako se koji zove. -->
+
+    <Grid Margin="24,20,24,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Text="Test programi" Style="{StaticResource NaslovStraneStyle}" />
+            <TextBlock Style="{StaticResource OpisStraneStyle}"
+                       Text="Jedan kabl — jedan .c61 fajl. Program se upisuje u spec folder sa ekrana „Ispitivanje“, dugmetom „Pripremi test program“." />
+        </StackPanel>
+
+        <!-- ================= PLOČICE ================= -->
+        <UniformGrid Grid.Row="1" Rows="1" Margin="0,0,0,18">
+            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource IvicaBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="20,18" Margin="0,0,16,0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaProgram}"
+                              Width="21" Height="21" Stroke="{StaticResource AkcenatJakBrush}"
+                              VerticalAlignment="Center" Margin="0,0,11,0" />
+                        <TextBlock Text="Programa u katalogu" FontSize="18" FontWeight="SemiBold"
+                                   Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Catalog.CableCount}" FontSize="30" FontWeight="Bold"
+                               Foreground="{StaticResource AkcenatJakBrush}" Margin="0,12,0,0" />
+                    <TextBlock Text="po jedan za svaki kabl" FontSize="13.5"
+                               Foreground="{StaticResource Tekst2Brush}" Margin="0,3,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource IvicaBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="20,18" Margin="0,0,16,0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaFascikla}"
+                              Width="21" Height="21" Stroke="{StaticResource AkcenatJakBrush}"
+                              VerticalAlignment="Center" Margin="0,0,11,0" />
+                        <TextBlock Text="Spec folder" FontSize="18" FontWeight="SemiBold"
+                                   Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding SpecFolder}" FontSize="13.5" TextWrapping="Wrap"
+                               Foreground="{StaticResource Tekst2Brush}" Margin="0,12,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource IvicaBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="20,18">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaOznaka}"
+                              Width="21" Height="21" Stroke="{StaticResource AkcenatJakBrush}"
+                              VerticalAlignment="Center" Margin="0,0,11,0" />
+                        <TextBlock Text="Šablon" FontSize="18" FontWeight="SemiBold"
+                                   Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding TemplatePathText}" FontSize="13.5" TextWrapping="Wrap"
+                               Foreground="{StaticResource Tekst2Brush}" Margin="0,12,0,0" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- ================= TABELA ================= -->
+        <Border Grid.Row="2" Background="{StaticResource PanelBrush}"
+                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1"
+                CornerRadius="12" Padding="20,18,20,20">
+            <DockPanel>
+
+                <Grid DockPanel.Dock="Top" Width="420" HorizontalAlignment="Left" Margin="0,0,0,14">
+                    <TextBox Text="{Binding Catalog.ProgramFilter, UpdateSourceTrigger=PropertyChanged}"
+                             Tag="Pretraga po imenu programa ili kablu…"
+                             Padding="37,9,11,9" />
+                    <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaLupa}"
+                          Width="17" Height="17" Stroke="{StaticResource Tekst3Brush}"
+                          HorizontalAlignment="Left" VerticalAlignment="Center"
+                          Margin="12,0,0,0" IsHitTestVisible="False" />
+                </Grid>
+
+                <Border BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1" CornerRadius="10">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Background="{StaticResource Panel3Brush}"
+                                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="0,0,0,1"
+                                CornerRadius="10,10,0,0" Padding="14,11">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="90" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Fajl test programa" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                <TextBlock Grid.Column="1" Text="Kabl" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                <TextBlock Grid.Column="2" Text="Vozilo" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                <TextBlock Grid.Column="3" Text="Netova" Style="{StaticResource ZaglavljeTabeleStyle}"
+                                           TextAlignment="Right" Margin="0,0,14,0" />
+                                <TextBlock Grid.Column="4" Text="Portovi" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                            </Grid>
+                        </Border>
+
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Catalog.ProgramRows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="#26FFFFFF" BorderThickness="0,0,0,1" Padding="14,11">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="180" />
+                                                    <ColumnDefinition Width="140" />
+                                                    <ColumnDefinition Width="180" />
+                                                    <ColumnDefinition Width="90" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Grid.Column="0" Text="{Binding SpecFile}"
+                                                           Style="{StaticResource CelijaJednoprostornaStyle}"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Code}"
+                                                           Style="{StaticResource CelijaStyle}" />
+                                                <TextBlock Grid.Column="2" Text="{Binding VehicleName}"
+                                                           Style="{StaticResource CelijaStyle}" />
+                                                <TextBlock Grid.Column="3" Text="{Binding NetCount}"
+                                                           Style="{StaticResource CelijaStyle}"
+                                                           TextAlignment="Right" Margin="0,0,14,0" />
+                                                <TextBlock Grid.Column="4" Text="{Binding Ports}"
+                                                           Style="{StaticResource CelijaJednoprostornaStyle}"
+                                                           ToolTip="{Binding Ports}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -53,10 +53,57 @@ public sealed class ResultCsvParser
         ("OPEN", DefectKind.Open)
     };
 
+    /// <summary>
+    /// Oblik merene vrednosti: broj sa opcionim znakom, decimalnim delom, eksponentom i jedinicom.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// PRETPOSTAVKA, ne znanje. Ovaj izraz je napravljen na osnovu <b>jednog jedinog stvarnog CSV
+    /// fajla sa dva reda</b>, u kome je bio uključen samo Open/Short test i u kome zato nema
+    /// nijedne izmerene vrednosti. Kako tačno CableConnector zapisuje izmerenu provodnu otpornost
+    /// (broj decimala, jedinicu, razmak pre jedinice, prefiks m/µ/k, oznaku Ω ili "Ohm",
+    /// eksponentni zapis) nije potvrđeno — biće poznato tek kad stignu fajlovi sa uključenim
+    /// Cond testom.
+    /// </para>
+    /// <para>
+    /// Zato je izraz namerno na jednom mestu i namerno širok: bolje je propustiti vrednost koja
+    /// liči na broj nego od nje napraviti lažnu grešku. Kad stigne stvarni fajl, dopunjuje se
+    /// ovde i samo ovde, a <c>MeasurementPatternTests</c> nabraja varijante koje pokrivamo —
+    /// nova varijanta se dodaje jednim redom u taj test.
+    /// </para>
+    /// <para>Delovi izraza:</para>
+    /// <list type="bullet">
+    ///   <item><description>znak: <c>+</c> ili <c>-</c>, opciono</description></item>
+    ///   <item><description>broj: <c>0</c>, <c>0.12</c>, <c>12.</c> ili <c>.12</c> (bez celog dela)</description></item>
+    ///   <item><description>eksponent: <c>E-02</c>, <c>e+3</c>, opciono</description></item>
+    ///   <item><description>jedinica: do 8 znakova, npr. <c>m</c>, <c>R</c>, <c>mOhm</c>, <c>mΩ</c>, <c>%</c>, sa ili bez razmaka</description></item>
+    /// </list>
+    /// </remarks>
+    public const string MeasurementRegex =
+        @"^[+-]?(\d+([.]\d*)?|[.]\d+)([eE][+-]?\d+)?\s*[A-Za-z%/°µΩΩ]{0,8}$";
+
     /// <summary>Broj (sa opcionom jedinicom) — merena vrednost, ne poruka o grešci.</summary>
     private static readonly Regex MeasurementPattern = new(
-        @"^[+-]?\d+([.]\d+)?([eE][+-]?\d+)?\s*[A-Za-z%/µΩ]{0,8}$",
+        MeasurementRegex,
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// Da li vrednost ćelije izgleda kao merena vrednost (broj sa opcionom jedinicom),
+    /// a ne kao poruka o grešci. Oblik je pretpostavka — vidi <see cref="MeasurementRegex"/>.
+    /// </summary>
+    public static bool IsMeasuredValue(string? text)
+        => !string.IsNullOrWhiteSpace(text) && MeasurementPattern.IsMatch(text.Trim());
+
+    /// <summary>
+    /// Da li se vrednost ćelije tumači kao poruka o grešci. Prazna vrednost, ishod ("PASS",
+    /// "--") i merena vrednost ("0.12", "51.2m") nisu greška; sve ostalo jeste, pa i poruka
+    /// koju ne prepoznajemo — ona se čuva kao sirov tekst umesto da se tiho izgubi.
+    /// </summary>
+    public static bool IsDefectMessage(string? text)
+    {
+        string message = text?.Trim() ?? string.Empty;
+        return message.Length > 0 && !Verdicts.Contains(message) && !IsMeasuredValue(message);
+    }
 
     private static readonly string[] TimestampFormats =
     {
@@ -114,6 +161,48 @@ public sealed class ResultCsvParser
 
         _processedLines = lines.Count;
         return new CsvParseResult(runs, warnings);
+    }
+
+    /// <summary>
+    /// Uklanja zapise koji se ponavljaju po prirodnom ključu <see cref="TestRunKey"/>
+    /// (<c>SpecFileName</c> + <c>Seq</c> + <c>TestedAt</c>). Zadržava prvi zapis svakog ključa.
+    /// </summary>
+    /// <param name="runs">Pročitani zapisi, redom kojim su u fajlu.</param>
+    /// <param name="warnings">
+    /// Ako je zadato, za svaki preskočen zapis se dopisuje upozorenje. Preskakanje je tiho —
+    /// ne prekida obradu — ali se mora videti, jer znači da je isti rezultat stigao dvaput.
+    /// </param>
+    /// <remarks>
+    /// Potrebno je zato što parser, kada fajl postane kraći nego ranije, čita ceo fajl od početka
+    /// (rukovanje dnevnom rotacijom). Ako je fajl prepisan istim imenom umesto zamenjen novim,
+    /// ranije pročitani redovi dolaze po drugi put. Isto pravilo sprovodi i jedinstveni indeks
+    /// nad <c>(SpecFileName, Seq, TestedAt)</c> u bazi.
+    /// </remarks>
+    public static List<TestRun> RemoveDuplicates(IEnumerable<TestRun> runs, ICollection<string>? warnings = null)
+    {
+        ArgumentNullException.ThrowIfNull(runs);
+
+        var seen = new HashSet<TestRunKey>();
+        var result = new List<TestRun>();
+
+        foreach (TestRun run in runs)
+        {
+            if (run is null)
+            {
+                continue;
+            }
+
+            TestRunKey key = TestRunKey.Of(run);
+            if (seen.Add(key))
+            {
+                result.Add(run);
+                continue;
+            }
+
+            warnings?.Add($"Preskočen duplikat rezultata ({key}) — isti zapis je već pročitan.");
+        }
+
+        return result;
     }
 
     private void ProcessLine(string line, int lineNumber, List<TestRun> runs, List<string> warnings)
@@ -179,6 +268,8 @@ public sealed class ResultCsvParser
                 "u koloni Pass; upisano je FAIL.");
         }
 
+        WarnOnExtraColumns(fields, lineNumber, warnings);
+
         run.TestedAt = ParseTimestamp(
             Field(fields, DateNames),
             Field(fields, TimeNames),
@@ -191,6 +282,44 @@ public sealed class ResultCsvParser
         }
 
         runs.Add(run);
+    }
+
+    /// <summary>
+    /// Javlja kad red ima više popunjenih polja nego što zaglavlje najavljuje kolona.
+    /// </summary>
+    /// <remarks>
+    /// Red sa <b>manje</b> polja je normalna pojava — stvarni fajl iz pogona izostavlja poslednju
+    /// kolonu ("unit") — pa se za njega ne javlja ništa; polja koja nedostaju se čitaju kao prazna,
+    /// a ako nedostaje nešto bitno (datum, ishod) upozorenje dolazi odatle. Red sa <b>više</b>
+    /// popunjenih polja znači da se skup kolona promenio bez novog zaglavlja i to treba da se vidi.
+    /// Vrednosti iz nenajavljenih kolona se svejedno pregledaju, da se poruka o grešci ne izgubi.
+    /// </remarks>
+    private void WarnOnExtraColumns(string[] fields, int lineNumber, List<string> warnings)
+    {
+        if (fields.Length <= _columns.Length)
+        {
+            return;
+        }
+
+        int filled = 0;
+        for (int i = _columns.Length; i < fields.Length; i++)
+        {
+            if (fields[i].Trim().Length > 0)
+            {
+                filled++;
+            }
+        }
+
+        if (filled == 0)
+        {
+            return;
+        }
+
+        warnings.Add(
+            $"Red {lineNumber.ToString(CultureInfo.InvariantCulture)} ima " +
+            $"{fields.Length.ToString(CultureInfo.InvariantCulture)} polja, a zaglavlje najavljuje " +
+            $"{_columns.Length.ToString(CultureInfo.InvariantCulture)} kolona; " +
+            $"{filled.ToString(CultureInfo.InvariantCulture)} nenajavljenih polja nije prazno.");
     }
 
     /// <summary>Traži greške u svim kolonama test stavki; imena kolona i njihov broj nisu fiksni.</summary>
@@ -206,13 +335,12 @@ public sealed class ResultCsvParser
 
             foreach (string token in fields[i].Split(';'))
             {
-                string message = token.Trim();
-                if (message.Length == 0 || Verdicts.Contains(message) || MeasurementPattern.IsMatch(message))
+                if (!IsDefectMessage(token))
                 {
                     continue;
                 }
 
-                yield return CreateDefect(message);
+                yield return CreateDefect(token);
             }
         }
     }

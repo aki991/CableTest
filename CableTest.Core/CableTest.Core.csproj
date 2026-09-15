@@ -15,4 +15,9 @@
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Migracije se ugrađuju u sklop, da se primene i kad pored .exe nema nijednog .sql fajla. -->
+    <EmbeddedResource Include="Data\Migrations\*.sql" />
+  </ItemGroup>
+
 </Project>

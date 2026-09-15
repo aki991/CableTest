@@ -1,0 +1,92 @@
+@page "/vozila"
+@inject TestingService Testing
+
+@* Pregled vozila iz kataloga. Izmena kataloga još nije na redu — ovaj ekran pokazuje šta u bazi
+   stoji, da operater ne mora da je otvara alatom za SQL. *@
+
+<PageTitle>CableTest — Vozila</PageTitle>
+
+<div class="strana">
+    <div class="strana-zaglavlje">
+        <h1>Vozila</h1>
+        <p>Vozila za koja postoje kablovski setovi u katalogu.</p>
+    </div>
+
+    <div class="plocice">
+        @foreach (Vehicle vehicle in _vehicles)
+        {
+            <div class="plocica">
+                <div class="plocica-naslov">
+                    <Ikona Naziv="vozilo" />
+                    @vehicle.Name
+                </div>
+                <div class="plocica-broj">@BrojKablova(vehicle.Id)</div>
+                <div class="plocica-opis">kablova u katalogu</div>
+                <div class="plocica-opis" style="margin-top:10px">
+                    Oznake: @Opseg(vehicle.Id)
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="panel">
+        <div class="naslov-tabele" style="margin-top:0">Pregled</div>
+        <div class="tabela-okvir">
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Vozilo</th>
+                        <th class="desno">Kablova</th>
+                        <th class="desno">Netova</th>
+                        <th class="desno">Ispitnih tačaka</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (Vehicle vehicle in _vehicles)
+                    {
+                        <tr>
+                            <td>@vehicle.Name</td>
+                            <td class="desno">@BrojKablova(vehicle.Id)</td>
+                            <td class="desno">@BrojNetova(vehicle.Id)</td>
+                            <td class="desno">@BrojTacaka(vehicle.Id)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private IReadOnlyList<Vehicle> _vehicles = Array.Empty<Vehicle>();
+    private IReadOnlyList<Cable> _cables = Array.Empty<Cable>();
+
+    protected override void OnInitialized()
+    {
+        _vehicles = Testing.AllVehicles;
+        _cables = Testing.AllCables;
+    }
+
+    private IEnumerable<Cable> KabloviVozila(long vehicleId) => _cables.Where(c => c.VehicleId == vehicleId);
+
+    private int BrojKablova(long vehicleId) => KabloviVozila(vehicleId).Count();
+
+    private int BrojNetova(long vehicleId) => KabloviVozila(vehicleId).Sum(c => c.Nets.Count);
+
+    private int BrojTacaka(long vehicleId) => KabloviVozila(vehicleId).Sum(CableLayout.CountPoints);
+
+    /// <summary>Prva i poslednja oznaka kabla, npr. „M30-W1 … M30-W20".</summary>
+    private string Opseg(long vehicleId)
+    {
+        Cable[] kablovi = KabloviVozila(vehicleId).ToArray();
+
+        if (kablovi.Length == 0)
+        {
+            return "—";
+        }
+
+        return kablovi.Length == 1
+            ? kablovi[0].Code
+            : $"{kablovi[0].Code} … {kablovi[^1].Code}";
+    }
+}

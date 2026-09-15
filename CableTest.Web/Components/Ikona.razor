@@ -1,0 +1,111 @@
+@* Ikone na jednom mestu, kao ugrađeni SVG.
+
+   Namerno bez spoljne biblioteke ikona: aplikacija radi na računaru pored ispitnog stola, koji
+   ne mora imati pristup internetu, pa sve što ekran prikazuje mora da stigne sa samog servera. *@
+
+<svg class="ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+    @switch (Naziv)
+    {
+        case "ispitivanje":
+            <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z" />
+            break;
+
+        case "vozilo":
+            <path d="M3 13.5 4.8 8a2 2 0 0 1 1.9-1.4h10.6A2 2 0 0 1 19.2 8L21 13.5" />
+            <path d="M3 13.5h18V18a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1v-1h-11v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4.5Z" />
+            <circle cx="6.8" cy="16" r=".9" fill="currentColor" stroke="none" />
+            <circle cx="17.2" cy="16" r=".9" fill="currentColor" stroke="none" />
+            break;
+
+        case "kabl":
+            <path d="M5.5 3v4.5M9.5 3v4.5" />
+            <path d="M4 7.5h7v2.8a3.5 3.5 0 0 1-3.5 3.5A3.5 3.5 0 0 1 4 10.3V7.5Z" />
+            <path d="M7.5 13.8V16a4 4 0 0 0 4 4h2.5" />
+            <path d="M18.5 15.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z" />
+            break;
+
+        case "program":
+            <path d="M6 2.5h8L19 7.5V21a.5.5 0 0 1-.5.5h-12A.5.5 0 0 1 6 21V3a.5.5 0 0 1 .5-.5Z" />
+            <path d="M13.5 2.5V8H19" />
+            <path d="M9 12.5h6M9 16h6" />
+            break;
+
+        case "istorija":
+            <path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1" />
+            <path d="M3.5 4.5V10H9" />
+            <path d="M12 7.5V12l3 2" />
+            break;
+
+        case "podesavanja":
+            <circle cx="12" cy="12" r="3.1" />
+            <path d="M19.4 14.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1v.3a2 2 0 1 1-4 0v-.2a1.6 1.6 0 0 0-2.8-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3.2a2 2 0 1 1 0-4h.2a1.6 1.6 0 0 0 1.1-2.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3.2a2 2 0 1 1 4 0v.2a1.6 1.6 0 0 0 2.8 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7h.3a2 2 0 1 1 0 4h-.2a1.6 1.6 0 0 0-1.4.9Z" />
+            break;
+
+        case "operater":
+            <circle cx="12" cy="8" r="3.6" />
+            <path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" />
+            break;
+
+        case "lupa":
+            <circle cx="10.5" cy="10.5" r="6.5" />
+            <path d="M15.5 15.5 21 21" />
+            break;
+
+        case "barkod":
+            <path d="M3.5 5v14M6.5 5v14M10 5v14M13.5 5v14M17 5v14M20.5 5v14" />
+            break;
+
+        case "strelica":
+            <path d="M9 5.5 15.5 12 9 18.5" />
+            break;
+
+        case "potvrda":
+            <path d="M4.5 12.5 9.5 17.5 19.5 6.5" stroke-width="2.6" />
+            break;
+
+        case "krug-potvrda":
+            <circle cx="12" cy="12" r="9" />
+            <path d="M8 12.3l2.8 2.8L16 9.5" />
+            break;
+
+        case "uzvicnik":
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7.5v5.5M12 16.4v.2" />
+            break;
+
+        case "peskir":
+        case "sat":
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5.2l3.3 2" />
+            break;
+
+        case "pokreni":
+            <path d="M7 4.5 19 12 7 19.5V4.5Z" fill="currentColor" stroke="none" />
+            break;
+
+        case "oznaka":
+            <path d="M3.5 11.2V4.5a1 1 0 0 1 1-1h6.7a1 1 0 0 1 .7.3l8 8a1 1 0 0 1 0 1.4l-6.7 6.7a1 1 0 0 1-1.4 0l-8-8a1 1 0 0 1-.3-.7Z" />
+            <circle cx="7.8" cy="7.8" r="1.3" />
+            break;
+
+        case "osvezi":
+            <path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1" />
+            <path d="M20.5 4.5V10H15" />
+            break;
+
+        case "fascikla":
+            <path d="M3.5 6.5a1 1 0 0 1 1-1h4.2l1.8 2h9a1 1 0 0 1 1 1v9.5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-11.5Z" />
+            break;
+
+        default:
+            <circle cx="12" cy="12" r="8.5" />
+            break;
+    }
+</svg>
+
+@code {
+    /// <summary>Ime ikone. Nepoznato ime daje prazan krug, a ne grešku.</summary>
+    [Parameter]
+    public string Naziv { get; set; } = string.Empty;
+}

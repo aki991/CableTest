@@ -1,0 +1,128 @@
+<UserControl x:Class="CableTest.App.Views.PodesavanjaView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="800" d:DesignWidth="1200">
+
+    <!-- Podešavanja u upotrebi. Ekran za sada samo prikazuje — izmena se radi u settings.json,
+         a ovde se vidi šta je aplikacija zaista pročitala. -->
+
+    <UserControl.Resources>
+        <Style x:Key="OdeljakStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource IvicaBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24,20,24,20" MaxWidth="900" HorizontalAlignment="Left">
+
+            <TextBlock Text="Podešavanja" Style="{StaticResource NaslovStraneStyle}" />
+            <TextBlock Style="{StaticResource OpisStraneStyle}" Margin="0,0,0,18">
+                <Run Text="Vrednosti sa kojima aplikacija trenutno radi. Menjaju se u fajlu" />
+                <Run Text="{Binding SettingsFileText, Mode=OneWay}" FontFamily="Consolas"
+                     Foreground="{StaticResource TekstBrush}" />
+                <Run Text="; izmena važi od sledećeg pokretanja." />
+            </TextBlock>
+
+            <!-- ================= PUTANJE ================= -->
+            <Border Style="{StaticResource OdeljakStyle}" Margin="0,0,0,18">
+                <StackPanel>
+                    <Border Background="{StaticResource Panel3Brush}"
+                            BorderBrush="{StaticResource IvicaBrush}" BorderThickness="0,0,0,1"
+                            CornerRadius="12,12,0,0" Padding="20,13">
+                        <TextBlock Text="Putanje" Style="{StaticResource OdeljakNaslovStyle}" />
+                    </Border>
+
+                    <Grid Margin="20,16,20,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Spec folder (.c61):"
+                                   Style="{StaticResource PodatakNazivStyle}" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SpecFolder}"
+                                   Style="{StaticResource PodatakVrednostStyle}" FontFamily="Consolas" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Rezultati (CSV):"
+                                   Style="{StaticResource PodatakNazivStyle}" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ResultPath}"
+                                   Style="{StaticResource PodatakVrednostStyle}" FontFamily="Consolas" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Šablon MASTER.c61:"
+                                   Style="{StaticResource PodatakNazivStyle}" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding TemplatePathText}"
+                                   Style="{StaticResource PodatakVrednostStyle}" FontFamily="Consolas" />
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Prati se:"
+                                   Style="{StaticResource PodatakNazivStyle}" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Testing.WatchedFileText}"
+                                   Style="{StaticResource PodatakVrednostStyle}" FontFamily="Consolas" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ================= RAD ================= -->
+            <Border Style="{StaticResource OdeljakStyle}">
+                <StackPanel>
+                    <Border Background="{StaticResource Panel3Brush}"
+                            BorderBrush="{StaticResource IvicaBrush}" BorderThickness="0,0,0,1"
+                            CornerRadius="12,12,0,0" Padding="20,13">
+                        <TextBlock Text="Rad" Style="{StaticResource OdeljakNaslovStyle}" />
+                    </Border>
+
+                    <Grid Margin="20,16,20,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Operater:"
+                                   Style="{StaticResource PodatakNazivStyle}" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding OperatorName}"
+                                   Style="{StaticResource PodatakVrednostStyle}" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Zvučni signal uz rezultat:"
+                                   Style="{StaticResource PodatakNazivStyle}" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SoundText}"
+                                   Style="{StaticResource PodatakVrednostStyle}" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Demo režim:"
+                                   Style="{StaticResource PodatakNazivStyle}" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DemoText}"
+                                   Style="{StaticResource PodatakVrednostStyle}" />
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Nadgledanje:"
+                                   Style="{StaticResource PodatakNazivStyle}" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Testing.StatusText}"
+                                   Style="{StaticResource PodatakVrednostStyle}" />
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Obrađeno rezultata:"
+                                   Style="{StaticResource PodatakNazivStyle}" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Testing.ProcessedText}"
+                                   Style="{StaticResource PodatakVrednostStyle}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

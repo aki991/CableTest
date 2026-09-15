@@ -1,0 +1,67 @@
+@page "/podesavanja"
+@inject TestingService Testing
+
+@* Podešavanja u upotrebi. Ekran za sada samo prikazuje — izmena se radi u
+   %APPDATA%\CableTest\settings.json, a ovde se vidi šta je aplikacija zaista pročitala. *@
+
+<PageTitle>CableTest — Podešavanja</PageTitle>
+
+<div class="strana">
+    <div class="strana-zaglavlje">
+        <h1>Podešavanja</h1>
+        <p>
+            Vrednosti sa kojima aplikacija trenutno radi. Menjaju se u fajlu
+            <span class="jednoprostorni">%APPDATA%\CableTest\settings.json</span>;
+            izmena važi od sledećeg pokretanja.
+        </p>
+    </div>
+
+    <div class="panel" style="flex:none">
+        <div class="odeljak">
+            <h2 class="odeljak-naslov">Putanje</h2>
+            <div class="odeljak-telo">
+                <dl class="podaci">
+                    <dt>Spec folder (.c61):</dt>
+                    <dd class="jednoprostorni">@Testing.Settings.SpecFolder</dd>
+
+                    <dt>Rezultati (CSV):</dt>
+                    <dd class="jednoprostorni">@Testing.Settings.ResultPath</dd>
+
+                    <dt>Šablon MASTER.c61:</dt>
+                    <dd class="jednoprostorni">
+                        @(string.IsNullOrWhiteSpace(Testing.Settings.TemplatePath)
+                            ? @"templates\MASTER.c61 (pored programa)"
+                            : Testing.Settings.TemplatePath)
+                    </dd>
+
+                    <dt>Prati se:</dt>
+                    <dd class="jednoprostorni">@Testing.WatchedFileText</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="flex:none">
+        <div class="odeljak">
+            <h2 class="odeljak-naslov">Rad</h2>
+            <div class="odeljak-telo">
+                <dl class="podaci">
+                    <dt>Operater:</dt>
+                    <dd>@Testing.OperatorDisplayName</dd>
+
+                    <dt>Zvučni signal uz rezultat:</dt>
+                    <dd>@(Testing.Settings.SoundEnabled ? "uključen" : "isključen")</dd>
+
+                    <dt>Demo režim:</dt>
+                    <dd>@(Testing.IsDemoMode ? "uključen — rezultati su simulirani" : "isključen")</dd>
+
+                    <dt>Nadgledanje:</dt>
+                    <dd>@Testing.StatusText</dd>
+
+                    <dt>Obrađeno rezultata:</dt>
+                    <dd>@Testing.ProcessedText</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>

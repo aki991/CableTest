@@ -1,13 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <!-- net8.0-windows i UseWPF: testovi pokrivaju i ViewModel-e iz CableTest.App. Nijedan test
+         ne otvara prozor — ViewModel-i ne diraju WPF tipove. -->
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WPF SDK iz podrazumevanih using-a izbacuje System.IO; vraćamo ga, jer se radi sa fajlovima. -->
+    <Using Include="System.IO" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
@@ -17,11 +25,23 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CableTest.Core\CableTest.Core.csproj" />
+    <ProjectReference Include="..\CableTest.App\CableTest.App.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Stvarni šablon, da testovi rade nad fajlom koji aplikacija zaista koristi. -->
     <Content Include="..\templates\MASTER.c61" Link="templates\MASTER.c61">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- XAML glavnog ekrana i okvira kao obican tekst, da test proveri da svaka veza pokazuje
+         na postojece svojstvo ViewModel-a. -->
+    <Content Include="..\CableTest.App\Views\TestingView.xaml" Link="Views\TestingView.xaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\CableTest.App\MainWindow.xaml" Link="MainWindow.xaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

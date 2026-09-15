@@ -1,0 +1,125 @@
+@page "/istorija"
+@implements IDisposable
+@inject TestingService Testing
+
+@* Istorija izvršenih testova. Ovde ulaze i zatečeni rezultati koji se ne prikazuju na glavnom
+   ekranu — istorija je dokaz da je kabl ispitan i mora da bude potpuna. *@
+
+<PageTitle>CableTest — Istorija</PageTitle>
+
+<div class="strana">
+    <div class="strana-zaglavlje">
+        <h1>Istorija</h1>
+        <p>Poslednjih @Broj testova, najnoviji prvi.</p>
+    </div>
+
+    <div class="plocice">
+        <div class="plocica">
+            <div class="plocica-naslov"><Ikona Naziv="istorija" /> Danas</div>
+            <div class="plocica-broj">@Testing.TodayTotal</div>
+            <div class="plocica-opis">izvršenih testova</div>
+        </div>
+        <div class="plocica">
+            <div class="plocica-naslov"><Ikona Naziv="krug-potvrda" /> Prošlo</div>
+            <div class="plocica-broj">@Testing.TodayPassed</div>
+            <div class="plocica-opis">danas</div>
+        </div>
+        <div class="plocica">
+            <div class="plocica-naslov"><Ikona Naziv="uzvicnik" /> Palo</div>
+            <div class="plocica-broj" style="color:var(--pao)">@Testing.TodayFailed</div>
+            <div class="plocica-opis">danas</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="naslov-tabele" style="margin-top:0">Izvršeni testovi</div>
+        <div class="tabela-okvir">
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Vreme</th>
+                        <th class="desno">Redni broj</th>
+                        <th>Test program</th>
+                        <th>Kabl</th>
+                        <th>Operater</th>
+                        <th class="desno">Grešaka</th>
+                        <th>Ishod</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_runs.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" style="color:var(--tekst-3); text-align:center; padding:22px">
+                                Istorija je prazna — nijedan rezultat još nije stigao sa testera.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (TestRun run in _runs)
+                        {
+                            <tr title="@run.RawRow">
+                                <td>@Vreme(run)</td>
+                                <td class="desno">@run.Seq</td>
+                                <td class="jednoprostorni">@run.SpecFileName</td>
+                                <td>@KablOznaka(run)</td>
+                                <td>@(string.IsNullOrWhiteSpace(run.Operator) ? "—" : run.Operator)</td>
+                                <td class="desno">@run.Defects.Count</td>
+                                <td>
+                                    <span class="stanje-oznaka @(run.Passed ? "prosao" : "pao")">
+                                        <Ikona Naziv="@(run.Passed ? "krug-potvrda" : "uzvicnik")" />
+                                        @(run.Passed ? "PROŠAO" : "PAO")
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    /// <summary>Koliko se poslednjih zapisa prikazuje.</summary>
+    private const int Broj = 200;
+
+    private IReadOnlyList<TestRun> _runs = Array.Empty<TestRun>();
+    private IReadOnlyList<Cable> _cables = Array.Empty<Cable>();
+
+    protected override void OnInitialized()
+    {
+        Testing.Changed += OnChanged;
+        Ucitaj();
+    }
+
+    private void Ucitaj()
+    {
+        _cables = Testing.AllCables;
+        _runs = Testing.RecentRuns(Broj);
+    }
+
+    private static string Vreme(TestRun run) => run.TestedAt == DateTime.MinValue
+        ? "—"
+        : run.TestedAt.ToString("dd.MM.yyyy. HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+
+    private string KablOznaka(TestRun run)
+    {
+        if (run.CableId is null)
+        {
+            return "neprepoznat";
+        }
+
+        return _cables.FirstOrDefault(c => c.Id == run.CableId.Value)?.Code ?? "neprepoznat";
+    }
+
+    // Novi rezultat na testeru znači i novi red ovde, i dok je ovaj ekran otvoren.
+    private void OnChanged() => _ = InvokeAsync(() =>
+    {
+        Ucitaj();
+        StateHasChanged();
+    });
+
+    public void Dispose() => Testing.Changed -= OnChanged;
+}
