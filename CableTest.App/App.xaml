@@ -479,6 +479,146 @@
             </Style>
 
             <!-- ================================================================================
+                 POLJE ZA POTVRDU
+                 Podrazumevani WPF CheckBox je svetla kutijica iz sistemske teme; na crnoj podlozi
+                 izgleda kao da je sa drugog ekrana.
+                 ================================================================================ -->
+
+            <Style TargetType="CheckBox">
+                <Setter Property="FontSize" Value="14.5" />
+                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="CheckBox">
+                            <StackPanel Orientation="Horizontal" Background="Transparent">
+                                <Border x:Name="Kutija" Width="19" Height="19" CornerRadius="5"
+                                        Background="{StaticResource Panel2Brush}"
+                                        BorderBrush="{StaticResource IvicaJakaBrush}"
+                                        BorderThickness="1"
+                                        VerticalAlignment="Center" Margin="0,0,10,0">
+                                    <Path x:Name="Kvacica"
+                                          Data="{StaticResource IkonaPotvrda}"
+                                          Stretch="Uniform" Width="11" Height="11"
+                                          Stroke="{StaticResource CrnaBrush}" StrokeThickness="2.6"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          StrokeLineJoin="Round"
+                                          Visibility="Collapsed" />
+                                </Border>
+                                <ContentPresenter VerticalAlignment="Center" />
+                            </StackPanel>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Kutija" Property="Background" Value="{StaticResource BelaBrush}" />
+                                    <Setter TargetName="Kutija" Property="BorderBrush" Value="{StaticResource BelaBrush}" />
+                                    <Setter TargetName="Kvacica" Property="Visibility" Value="Visible" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Kutija" Property="BorderBrush" Value="{StaticResource AkcenatBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource Tekst3Brush}" />
+                                    <Setter TargetName="Kutija" Property="Opacity" Value="0.45" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ================================================================================
+                 STABLO
+                 Koristi ga samo razvojna strana „CableConnector“; podrazumevani WPF TreeView je
+                 beo i sa plavim izborom, pa se ovde pravi u istoj temi kao i ostali spiskovi.
+                 ================================================================================ -->
+
+            <Style x:Key="DrvoStrelicaStyle" TargetType="ToggleButton">
+                <Setter Property="Focusable" Value="False" />
+                <Setter Property="IsTabStop" Value="False" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Width" Value="16" />
+                <Setter Property="Height" Value="16" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border Background="Transparent">
+                                <!-- Sklopljeno: strelica udesno. Rasklopljeno: strelica nadole. -->
+                                <Path x:Name="Strelica"
+                                      Data="M5.5 3.5 10.5 8 5.5 12.5"
+                                      Stroke="{StaticResource Tekst2Brush}"
+                                      StrokeThickness="1.7"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Strelica" Property="Data" Value="M3.5 5.5 8 10.5 12.5 5.5" />
+                                    <Setter TargetName="Strelica" Property="Stroke" Value="{StaticResource BelaBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Strelica" Property="Stroke" Value="{StaticResource BelaBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="DrvoStavkaStyle" TargetType="TreeViewItem">
+                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                <!-- Izbor ide u oba smera: i klik operatera i čvor koji strana sama označi (F8). -->
+                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TreeViewItem">
+                            <StackPanel>
+                                <Border x:Name="Okvir" Background="Transparent" CornerRadius="6"
+                                        Padding="6,5" Margin="0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="20" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <ToggleButton x:Name="Strelica" Grid.Column="0"
+                                                      Style="{StaticResource DrvoStrelicaStyle}"
+                                                      ClickMode="Press"
+                                                      VerticalAlignment="Top" Margin="0,1,0,0"
+                                                      IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" />
+                                        <ContentPresenter x:Name="PART_Header" Grid.Column="1"
+                                                          ContentSource="Header"
+                                                          HorizontalAlignment="Stretch" />
+                                    </Grid>
+                                </Border>
+                                <ItemsPresenter x:Name="Deca" Margin="17,0,0,0" />
+                            </StackPanel>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsExpanded" Value="False">
+                                    <Setter TargetName="Deca" Property="Visibility" Value="Collapsed" />
+                                </Trigger>
+                                <Trigger Property="HasItems" Value="False">
+                                    <Setter TargetName="Strelica" Property="Visibility" Value="Hidden" />
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Okvir" Property="Background" Value="{StaticResource IzabranRedBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="DrvoStyle" TargetType="TreeView">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="ItemContainerStyle" Value="{StaticResource DrvoStavkaStyle}" />
+                <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            </Style>
+
+            <!-- ================================================================================
                  PADAJUĆA LISTA
                  ================================================================================ -->
 

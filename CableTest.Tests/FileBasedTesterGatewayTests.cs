@@ -12,16 +12,17 @@ namespace CableTest.Tests;
 /// </summary>
 public sealed class FileBasedTesterGatewayTests : IDisposable
 {
-    private const string CrLf = "\r\n";
+    private const string CrLf = CsvSamples.CrLf;
 
-    private const string Header =
-        "Seq.,Filename,Pass,Date,Time,Lots,Barcode1,Operater,STEP 1,O/S TEST,unit,";
+    /// <summary>Zaglavlje i redovi su isti uzorci nad kojima se ispituje i parser.</summary>
+    private const string Header = CsvSamples.Header;
 
     /// <summary>Koliko se najduže čeka da rezultat stigne. Nadgledanje je asinhrono.</summary>
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
 
     private readonly string _folder;
     private readonly ConcurrentQueue<TestRunReceivedEventArgs> _received = new();
+    private readonly ConcurrentQueue<GatewayErrorEventArgs> _errors = new();
     private readonly List<FileBasedTesterGateway> _gateways = new();
 
     public FileBasedTesterGatewayTests()
@@ -72,7 +73,7 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
         Assert.Equal("O01-O02", Assert.Single(events[1].Run.Defects).Points);
         Assert.Equal(path, events[0].SourcePath);
 
-        TesterGatewayState state = gateway.State;
+        TesterGatewayState state = gateway.Diagnostics;
         Assert.True(state.IsMonitoring);
         Assert.Equal(path, state.CurrentFilePath);
         Assert.Equal(2, state.ProcessedRunCount);
@@ -194,7 +195,7 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
 
         TestRunReceivedEventArgs[] events = _received.ToArray();
         Assert.Equal(new DateTime(2026, 9, 8, 6, 2, 0), events[2].Run.TestedAt);
-        Assert.True(gateway.State.IsMonitoring);
+        Assert.True(gateway.Diagnostics.IsMonitoring);
     }
 
     [Fact]
@@ -207,9 +208,9 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
         WaitForRuns(1);
 
         File.Delete(path);
-        WaitFor(() => gateway.State.CurrentFilePath is null, "fajl je obrisan");
+        WaitFor(() => gateway.Diagnostics.CurrentFilePath is null, "fajl je obrisan");
 
-        Assert.True(gateway.State.IsMonitoring);
+        Assert.True(gateway.Diagnostics.IsMonitoring);
 
         Write(path, Header + CrLf + Row(5, "pass", "08:30:00"));
         WaitForRuns(2);
@@ -224,14 +225,14 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
 
         FileBasedTesterGateway gateway = Start(path);
 
-        Assert.True(gateway.State.IsMonitoring);
-        Assert.Null(gateway.State.CurrentFilePath);
+        Assert.True(gateway.Diagnostics.IsMonitoring);
+        Assert.Null(gateway.Diagnostics.CurrentFilePath);
         Assert.Empty(_received);
 
         Write(path, Header + CrLf + Row(1, "pass", "11:44:11"));
         WaitForRuns(1);
 
-        Assert.Equal(path, gateway.State.CurrentFilePath);
+        Assert.Equal(path, gateway.Diagnostics.CurrentFilePath);
     }
 
     [Fact]
@@ -241,8 +242,8 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
 
         FileBasedTesterGateway gateway = Start(missing);
 
-        Assert.True(gateway.State.IsMonitoring);
-        Assert.Null(gateway.State.CurrentFilePath);
+        Assert.True(gateway.Diagnostics.IsMonitoring);
+        Assert.Null(gateway.Diagnostics.CurrentFilePath);
 
         Directory.CreateDirectory(Path.GetDirectoryName(missing)!);
         Write(missing, Header + CrLf + Row(1, "pass", "11:44:11"));
@@ -278,13 +279,13 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
         WaitForRuns(1);
 
         Assert.True(gateway.IsFolderMode());
-        Assert.Equal(stari, gateway.State.CurrentFilePath);
+        Assert.Equal(stari, gateway.Diagnostics.CurrentFilePath);
 
         // Nov dan, nov fajl u istom folderu.
         string novi = CsvPath("MERENJA-20260908.csv");
         Write(novi, Header + CrLf + Row(1, "pass", "06:02:00", date: "2026/09/08"));
 
-        WaitFor(() => gateway.State.CurrentFilePath == novi, "prelazak na noviji fajl");
+        WaitFor(() => gateway.Diagnostics.CurrentFilePath == novi, "prelazak na noviji fajl");
         WaitForRuns(2);
 
         Assert.Equal(new DateTime(2026, 9, 8, 6, 2, 0), _received.ToArray()[1].Run.TestedAt);
@@ -307,7 +308,7 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
         File.Delete(path);
         Write(path, Header + CrLf + Row(1, "pass", "11:44:11") + Row(2, "pass", "11:50:00"));
 
-        WaitFor(() => gateway.State.SkippedDuplicateCount >= 2, "preskočena dva duplikata");
+        WaitFor(() => gateway.Diagnostics.SkippedDuplicateCount >= 2, "preskočena dva duplikata");
         Thread.Sleep(200);
 
         Assert.Equal(3, _received.Count);
@@ -330,7 +331,7 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
         WaitForRuns(1);
 
         gateway.StopMonitoring();
-        Assert.False(gateway.State.IsMonitoring);
+        Assert.False(gateway.Diagnostics.IsMonitoring);
 
         Append(path, Row(2, "pass", "11:50:00"));
         Thread.Sleep(300);
@@ -349,7 +350,7 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
         gateway.StopMonitoring();
         gateway.CheckNow();
 
-        Assert.False(gateway.State.IsMonitoring);
+        Assert.False(gateway.Diagnostics.IsMonitoring);
     }
 
     [Fact]
@@ -364,9 +365,9 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
 
         gateway.StartMonitoring();
 
-        Assert.True(gateway.State.IsMonitoring);
-        Assert.NotNull(gateway.State.LastError);
-        Assert.Contains("nije podešena", gateway.State.LastError!, StringComparison.Ordinal);
+        Assert.True(gateway.Diagnostics.IsMonitoring);
+        Assert.NotNull(gateway.Diagnostics.LastError);
+        Assert.Contains("nije podešena", gateway.Diagnostics.LastError!, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -381,12 +382,284 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
         WaitForRuns(1);
 
         Assert.NotEmpty(_received.ToArray()[0].Warnings);
-        Assert.NotNull(gateway.State.LastWarning);
+        Assert.NotNull(gateway.Diagnostics.LastWarning);
+    }
+
+    // -------------------------------------------------------------------------------------
+    // Zaključan i polovičan fajl
+    // -------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// CableConnector drži fajl zaključan dok upisuje. Čitanje se ponavlja, pa rezultat stigne
+    /// čim se fajl oslobodi — bez ijednog izuzetka i bez izgubljenog reda.
+    /// </summary>
+    [Fact]
+    public void ZakljucanFajl_KojiSeOslobodi_DajeRezultatKadSeOslobodi()
+    {
+        string path = CsvPath("rezultati.csv");
+
+        // Fajl ima sadržaj, ali ga drugi program drži zaključanim — čitanje ne prolazi.
+        var brava = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+        WriteTo(brava, Header + CrLf + Row(1, "pass", "11:44:11"));
+
+        FileBasedTesterGateway gateway = Start(path);
+
+        try
+        {
+            Thread.Sleep(300);
+
+            Assert.Empty(_received);
+            Assert.True(gateway.Diagnostics.IsMonitoring);
+            Assert.NotEmpty(_errors);
+        }
+        finally
+        {
+            brava.Dispose();
+        }
+
+        // Čim se fajl oslobodi, red stiže — ništa nije izgubljeno.
+        WaitForRuns(1);
+        Assert.Equal(1, _received.ToArray()[0].Run.Seq);
+    }
+
+    /// <summary>Dva fajla jedan za drugim: oba se pročitaju, redom.</summary>
+    [Fact]
+    public void DvaFajlaUzastopno_ObaDajuRezultate()
+    {
+        string prvi = CsvPath("MERENJA-20260907.csv");
+        Write(prvi, Header + CrLf + Row(1, "pass", "07:15:00"));
+        File.SetLastWriteTimeUtc(prvi, DateTime.UtcNow.AddHours(-1));
+
+        FileBasedTesterGateway gateway = Start(_folder);
+        WaitForRuns(1);
+
+        string drugi = CsvPath("MERENJA-20260908.csv");
+        Write(drugi, Header + CrLf + Row(2, "fail", "06:02:00", "OPEN O31-O32;FAIL", date: "2026/09/08"));
+
+        WaitForRuns(2);
+
+        TestRunReceivedEventArgs[] events = _received.ToArray();
+        Assert.Equal(new[] { 1, 2 }, events.Select(e => e.Run.Seq));
+        Assert.Equal(prvi, events[0].SourcePath);
+        Assert.Equal(drugi, events[1].SourcePath);
+        Assert.False(events[1].Run.Passed);
+    }
+
+    /// <summary>
+    /// Isti sadržaj u drugom fajlu nije ponovljeno čitanje nego duplikat: prosleđuje se označen,
+    /// a odluku donosi sloj iznad.
+    /// </summary>
+    [Fact]
+    public void IstiSadrzajUDrugomFajlu_StizeOznacenKaoDuplikat()
+    {
+        string prvi = CsvPath("A-20260907.csv");
+        Write(prvi, Header + CrLf + Row(1, "pass", "07:15:00"));
+        File.SetLastWriteTimeUtc(prvi, DateTime.UtcNow.AddHours(-1));
+
+        FileBasedTesterGateway gateway = Start(_folder);
+        WaitForRuns(1);
+
+        // Kopija istog reda pod drugim imenom — npr. neko je prekopirao jučerašnji fajl.
+        string drugi = CsvPath("B-20260908.csv");
+        Write(drugi, Header + CrLf + Row(1, "pass", "07:15:00"));
+
+        WaitForRuns(2);
+
+        TestRunReceivedEventArgs[] events = _received.ToArray();
+
+        Assert.False(events[0].IsDuplicate);
+        Assert.True(events[1].IsDuplicate);
+        Assert.Equal(prvi, events[1].DuplicateOfPath);
+
+        // Duplikat se ne odbacuje: rezultat je prosleđen.
+        Assert.Equal(2, gateway.Diagnostics.ProcessedRunCount);
+    }
+
+    /// <summary>Folder koji nestane usred rada ne ruši nadgledanje; kad se vrati, rad se nastavlja.</summary>
+    [Fact]
+    public void BrisanjeFoldera_NeRusiNadgledanje_INastavljaSePosleVracanja()
+    {
+        string folder = Path.Combine(_folder, "rezultati");
+        Directory.CreateDirectory(folder);
+
+        string path = Path.Combine(folder, "MERENJA.csv");
+        Write(path, Header + CrLf + Row(1, "pass", "07:15:00"));
+
+        FileBasedTesterGateway gateway = Start(folder);
+        WaitForRuns(1);
+
+        Directory.Delete(folder, recursive: true);
+
+        WaitFor(() => gateway.Diagnostics.CurrentFilePath is null, "folder je obrisan");
+        Assert.True(gateway.Diagnostics.IsMonitoring);
+        Assert.NotEmpty(_errors);
+
+        Directory.CreateDirectory(folder);
+        Write(path, Header + CrLf + Row(7, "pass", "08:30:00"));
+
+        WaitForRuns(2);
+        Assert.Equal(7, _received.ToArray()[1].Run.Seq);
+    }
+
+    // -------------------------------------------------------------------------------------
+    // Čekanje na rezultat
+    // -------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task WaitForResult_DobijaPrviUzivoRezultat()
+    {
+        string path = CsvPath("rezultati.csv");
+        Write(path, Header + CrLf);
+
+        FileBasedTesterGateway gateway = Start(path);
+
+        Assert.True((await gateway.LoadProgramAsync(Kabl(), CancellationToken.None)).IsOk);
+
+        Task<GatewayResult> cekanje = gateway.WaitForResultAsync(Timeout, CancellationToken.None);
+
+        Append(path, Row(1, "pass", "11:44:11"));
+
+        GatewayResult result = await cekanje;
+
+        Assert.True(result.IsOk);
+        Assert.Equal(1, result.Run!.Seq);
+        Assert.Equal(TesterState.Completed, gateway.State);
+    }
+
+    [Fact]
+    public async Task WaitForResult_KadRezultatNeStigne_IstekneVreme()
+    {
+        string path = CsvPath("rezultati.csv");
+        Write(path, Header + CrLf);
+
+        FileBasedTesterGateway gateway = Start(path);
+        await gateway.LoadProgramAsync(Kabl(), CancellationToken.None);
+
+        GatewayResult result = await gateway.WaitForResultAsync(
+            TimeSpan.FromMilliseconds(150),
+            CancellationToken.None);
+
+        Assert.Equal(GatewayStatus.Timeout, result.Status);
+        Assert.Equal(TesterState.Failed, gateway.State);
+        Assert.Null(result.Run);
+    }
+
+    /// <summary>Otkazivanje mora stvarno da prekine čekanje, a ne da ga pusti do isteka roka.</summary>
+    [Fact]
+    public async Task WaitForResult_Otkazivanje_PrekidaCekanjeOdmah()
+    {
+        string path = CsvPath("rezultati.csv");
+        Write(path, Header + CrLf);
+
+        FileBasedTesterGateway gateway = Start(path);
+        await gateway.LoadProgramAsync(Kabl(), CancellationToken.None);
+
+        using var cts = new CancellationTokenSource();
+
+        Task<GatewayResult> cekanje = gateway.WaitForResultAsync(TimeSpan.FromMinutes(10), cts.Token);
+
+        cts.Cancel();
+
+        GatewayResult result = await cekanje.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Equal(GatewayStatus.Cancelled, result.Status);
+
+        // Test na mašini nije prekinut, pa stanje ostaje na čekanju.
+        Assert.Equal(TesterState.WaitingForResult, gateway.State);
+    }
+
+    [Fact]
+    public async Task StartTest_NijePodrzan_AliNeBacaIzuzetak()
+    {
+        FileBasedTesterGateway gateway = Start(CsvPath("rezultati.csv"));
+
+        GatewayResult result = await gateway.StartTestAsync(CancellationToken.None);
+
+        Assert.Equal(GatewayStatus.NotSupported, result.Status);
+        Assert.Contains("START", result.Message, StringComparison.Ordinal);
     }
 
     // -------------------------------------------------------------------------------------
     // Priprema testa (.c61)
     // -------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task LoadProgramAsync_UpisujeSpecIPrelaziUProgramLoaded()
+    {
+        string specFolder = Path.Combine(_folder, "spec");
+        Directory.CreateDirectory(specFolder);
+
+        var gateway = new FileBasedTesterGateway(new TesterGatewayOptions
+        {
+            SpecFolder = specFolder,
+            TemplatePath = Path.Combine("templates", "MASTER.c61"),
+            ResultPath = CsvPath("rezultati.csv")
+        });
+        _gateways.Add(gateway);
+
+        GatewayResult result = await gateway.LoadProgramAsync(Kabl(), CancellationToken.None);
+
+        Assert.True(result.IsOk);
+        Assert.Equal(TesterState.ProgramLoaded, gateway.State);
+        Assert.True(File.Exists(Path.Combine(specFolder, "M100W1.c61")));
+    }
+
+    /// <summary>
+    /// Kabl kome u priključnoj tabeli nedostaje tačka ne dobija .c61 — ni prazan, ni polovičan.
+    /// Operater dobija poruku šta tačno nedostaje.
+    /// </summary>
+    [Fact]
+    public async Task LoadProgramAsync_KadKablNijeSpreman_NePiseSpecNegoObjasnjava()
+    {
+        string specFolder = Path.Combine(_folder, "spec");
+        Directory.CreateDirectory(specFolder);
+
+        var gateway = new FileBasedTesterGateway(new TesterGatewayOptions
+        {
+            SpecFolder = specFolder,
+            TemplatePath = Path.Combine("templates", "MASTER.c61"),
+            ResultPath = CsvPath("rezultati.csv")
+        });
+        _gateways.Add(gateway);
+
+        Cable cable = Kabl();
+        cable.Terminals.Add(new CableTerminal { Label = "DIN:1", TesterPoint = "A01", IsProvisional = true });
+        cable.Terminals.Add(new CableTerminal { Label = "10XF:02", TesterPoint = null, IsProvisional = true });
+        cable.Wires.Add(new CableWire
+        {
+            WireNo = 1, Color = "BR", CrossSectionMm2 = 1.5m,
+            FromTerminal = "DIN:1", ToTerminal = "10XF:02"
+        });
+
+        GatewayResult result = await gateway.LoadProgramAsync(cable, CancellationToken.None);
+
+        Assert.Equal(GatewayStatus.Failed, result.Status);
+        Assert.Contains("nije spreman za ispitivanje", result.Message, StringComparison.Ordinal);
+        Assert.Contains("10XF:02", result.Message, StringComparison.Ordinal);
+        Assert.Empty(Directory.GetFiles(specFolder));
+    }
+
+    /// <summary>
+    /// Kad priprema ne uspe, to je odgovor sa objašnjenjem i izuzetkom uz njega — a ne izuzetak
+    /// koji se probija do GUI niti.
+    /// </summary>
+    [Fact]
+    public async Task LoadProgramAsync_KadSpecFolderNePostoji_VracaGresku()
+    {
+        var gateway = new FileBasedTesterGateway(new TesterGatewayOptions
+        {
+            SpecFolder = Path.Combine(_folder, "nema-ga"),
+            TemplatePath = Path.Combine("templates", "MASTER.c61"),
+            ResultPath = CsvPath("rezultati.csv")
+        });
+        _gateways.Add(gateway);
+
+        GatewayResult result = await gateway.LoadProgramAsync(Kabl(), CancellationToken.None);
+
+        Assert.Equal(GatewayStatus.Failed, result.Status);
+        Assert.IsType<DirectoryNotFoundException>(result.Error);
+        Assert.Equal(TesterState.Failed, gateway.State);
+    }
 
     [Fact]
     public async Task PrepareTestAsync_UpisujeSpecFajlUSpecFolder()
@@ -413,7 +686,7 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
         string text = File.ReadAllText(written);
         Assert.Contains("OSNet=1", text, StringComparison.Ordinal);
         Assert.Contains("OSNet:O01-O02-O31-O32", text, StringComparison.Ordinal);
-        Assert.Equal(written, gateway.State.LastPreparedSpecPath);
+        Assert.Equal(written, gateway.Diagnostics.LastPreparedSpecPath);
     }
 
     [Fact]
@@ -458,23 +731,35 @@ public sealed class FileBasedTesterGatewayTests : IDisposable
 
     private FileBasedTesterGateway Start(string resultPath)
     {
-        var gateway = new FileBasedTesterGateway(new TesterGatewayOptions
-        {
-            SpecFolder = _folder,
-            ResultPath = resultPath,
-            PollInterval = TimeSpan.FromMilliseconds(50)
-        });
+        var gateway = new FileBasedTesterGateway(
+            new TesterGatewayOptions
+            {
+                SpecFolder = _folder,
+                ResultPath = resultPath,
+                PollInterval = TimeSpan.FromMilliseconds(50)
+            },
+            // Kratka odlaganja: red pokušaja je isti kao u pogonu, samo se ne čeka sekundu i po.
+            new StableFileReader(new[] { 10, 20, 40, 80 }));
 
         _gateways.Add(gateway);
-        gateway.TestRunReceived += (_, e) => _received.Enqueue(e);
+        gateway.ResultReceived += (_, e) => _received.Enqueue(e);
+        gateway.GatewayError += (_, e) => _errors.Enqueue(e);
         gateway.StartMonitoring();
         return gateway;
     }
 
+    private static Cable Kabl()
+    {
+        var cable = new Cable { Id = 1, Code = "M100-W1", SpecFileName = "M100W1" };
+        cable.Nets.Add(new CableNet { Ordinal = 1, Points = "O01-O02-O31-O32" });
+        return cable;
+    }
+
+
     private string CsvPath(string name) => Path.Combine(_folder, name);
 
     private static string Row(int seq, string pass, string time, string osTest = "PASS", string date = "2026/09/07")
-        => $"{seq},M100W1,{pass},{date},{time},,,Miloš,PASS,{osTest}," + CrLf;
+        => CsvSamples.Row(seq, pass, time, osTest, date);
 
     private static void Write(string path, string text)
     {

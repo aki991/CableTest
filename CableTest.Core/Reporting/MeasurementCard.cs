@@ -33,6 +33,11 @@ public sealed class MeasurementCardData
 /// </remarks>
 public static class MeasurementCard
 {
+    /// <summary>Napomena koja ide na kartu dok priključna tabela nije potvrđena na adapteru.</summary>
+    public const string ProvisionalNote =
+        "Priključna tabela je privremena — raspored tačaka testera nije potvrđen na adapteru. " +
+        "Tačke u zagradama uz greške odnose se na taj privremeni raspored.";
+
     /// <summary>Pravi HTML dokument merne karte.</summary>
     public static string BuildHtml(MeasurementCardData data)
     {
@@ -107,6 +112,27 @@ public static class MeasurementCard
             Row(html, "Opis", data.Cable!.Description);
         }
 
+        // Podaci sa elektro crteža: po njima se merna karta može uporediti sa dokumentacijom.
+        if (!string.IsNullOrWhiteSpace(data.Cable?.Designation))
+        {
+            Row(html, "Oznaka sa crteža", data.Cable!.Designation);
+        }
+
+        if (!string.IsNullOrWhiteSpace(data.Cable?.CableType))
+        {
+            Row(html, "Tip kabla", data.Cable!.CableType);
+        }
+
+        if (data.Cable is { LengthM: > 0 })
+        {
+            Row(html, "Dužina", data.Cable.LengthText);
+        }
+
+        if (!string.IsNullOrWhiteSpace(data.Cable?.SourceDocument))
+        {
+            Row(html, "Dokumentacija", data.Cable!.SourceText);
+        }
+
         Row(html, "Spec fajl", run.SpecFileName);
         Row(html, "Redni broj testa", run.Seq.ToString(CultureInfo.InvariantCulture));
         Row(html, "Datum i vreme", FormatTime(run.TestedAt));
@@ -119,15 +145,25 @@ public static class MeasurementCard
 
         html.Append("</table>\n");
 
+        // Dok raspored tačaka nije potvrđen na adapteru, to mora da piše i na kartu koja ide u
+        // arhivu: neko će je čitati kad se adapter već promeni.
+        if (data.Cable is { } cable && cable.HasProvisionalPoints)
+        {
+            html.Append("<p class=\"napomena\">")
+                .Append(Escape(ProvisionalNote))
+                .Append("</p>\n");
+        }
+
         if (run.Defects.Count > 0)
         {
             html.Append("<h2>Pronađene greške</h2>\n<ul class=\"greske\">\n");
             foreach (TestDefect defect in run.Defects)
             {
-                html.Append("  <li>").Append(Escape(defect.Describe()));
+                string text = DefectTranslator.Describe(defect, data.Cable);
+                html.Append("  <li>").Append(Escape(text));
 
                 if (!string.IsNullOrWhiteSpace(defect.RawText)
-                    && !string.Equals(defect.RawText, defect.Describe(), StringComparison.Ordinal))
+                    && !string.Equals(defect.RawText, text, StringComparison.Ordinal))
                 {
                     html.Append(" <span class=\"sirovo\">(").Append(Escape(defect.RawText)).Append(")</span>");
                 }
@@ -136,6 +172,25 @@ public static class MeasurementCard
             }
 
             html.Append("</ul>\n");
+        }
+
+        if (data.Cable is { Wires.Count: > 0 })
+        {
+            html.Append("<h2>Provodnici</h2>\n<table class=\"podaci\">\n");
+            html.Append("  <tr><th>Br.</th><th>Boja</th><th>Presek</th><th>Od</th><th>Do</th><th>Dužina</th></tr>\n");
+
+            foreach (CableWire wire in data.Cable.Wires.OrderBy(w => w.WireNo))
+            {
+                html.Append("  <tr><td>").Append(wire.WireNo.ToString(CultureInfo.InvariantCulture))
+                    .Append("</td><td>").Append(Escape(WireColor.DescribeFull(wire.Color)))
+                    .Append("</td><td>").Append(Escape(wire.CrossSectionText))
+                    .Append("</td><td>").Append(Escape(wire.FromTerminal))
+                    .Append("</td><td>").Append(Escape(wire.ToTerminal))
+                    .Append("</td><td>").Append(Escape(wire.LengthM is null ? data.Cable.LengthText : wire.LengthText))
+                    .Append("</td></tr>\n");
+            }
+
+            html.Append("</table>\n");
         }
 
         if (data.Cable is not null && data.Cable.Nets.Count > 0)

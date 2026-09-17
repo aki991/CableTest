@@ -230,6 +230,49 @@ public sealed class ConfigurationAndReportingTests : IDisposable
         Assert.Contains("Kontrolor", html, StringComparison.Ordinal);        // mesto za potpis
     }
 
+    /// <summary>
+    /// Karta ide u arhivu i čita se kasnije, kad se adapter i dokumentacija možda već promene.
+    /// Zato na njoj moraju da stoje oznaka sa crteža, tip, dužina, izvor dokumentacije i tabela
+    /// provodnika — i napomena da je priključna tabela bila privremena.
+    /// </summary>
+    [Fact]
+    public void MernaKarta_SadrziPodatkeSaCrtezaITabeluProvodnika()
+    {
+        // HTML kodira sve što nije ASCII (mm², →, ž), pa se poredi nad dekodiranim tekstom.
+        string text = System.Net.WebUtility.HtmlDecode(MeasurementCard.BuildHtml(KartaSaOzicenjem()));
+
+        Assert.Contains("=40-W2", text, StringComparison.Ordinal);
+        Assert.Contains("Snop FLRY 2x0,75 mm²", text, StringComparison.Ordinal);
+        Assert.Contains("5,9 m", text, StringComparison.Ordinal);
+        Assert.Contains("40_grupa_2_0.pdf, strana 7", text, StringComparison.Ordinal);
+
+        Assert.Contains("Provodnici", text, StringComparison.Ordinal);
+        Assert.Contains("BR (braon)", text, StringComparison.Ordinal);
+        Assert.Contains("0,75 mm²", text, StringComparison.Ordinal);
+        Assert.Contains("10XB:16", text, StringComparison.Ordinal);
+
+        // Greška je prevedena na jezik crteža, uz tačku testera u zagradi.
+        Assert.Contains("Prekid: DIN:2 → 10XB:16, žica BR (A02–B01)", text, StringComparison.Ordinal);
+
+        Assert.Contains("Priključna tabela je privremena", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MernaKarta_BezPrivremenihDodela_NemaNapomenuOAdapteru()
+    {
+        MeasurementCardData data = KartaSaOzicenjem();
+
+        foreach (CableTerminal terminal in data.Cable!.Terminals)
+        {
+            terminal.IsProvisional = false;
+        }
+
+        Assert.DoesNotContain(
+            "Priključna tabela je privremena",
+            MeasurementCard.BuildHtml(data),
+            StringComparison.Ordinal);
+    }
+
     [Fact]
     public void MernaKarta_ImaStilZaStampuA4()
     {
@@ -299,6 +342,58 @@ public sealed class ConfigurationAndReportingTests : IDisposable
         data.Run.TestedAt = DateTime.MinValue;
 
         Assert.Contains("vreme nije prepoznato", MeasurementCard.BuildHtml(data), StringComparison.Ordinal);
+    }
+
+    /// <summary>Merna karta kabla sa crteža: =40-W2, sa ožičenjem i privremenom priključnom tabelom.</summary>
+    private static MeasurementCardData KartaSaOzicenjem()
+    {
+        var cable = new Cable
+        {
+            Id = 2,
+            Code = "40-W2",
+            Description = "Snop FLRY, DIN 72585 pod uglom",
+            SpecFileName = "40W2",
+            Designation = "=40-W2",
+            CableType = "Snop FLRY 2x0,75 mm²",
+            LengthM = 5.9m,
+            SourceDocument = "40_grupa_2_0.pdf",
+            SourcePage = 7
+        };
+
+        cable.Terminals.Add(new CableTerminal
+        {
+            Label = "DIN:2", Side = CableSide.A, ContactType = "DIN 72585 pin",
+            TesterPoint = "A02", IsProvisional = true
+        });
+        cable.Terminals.Add(new CableTerminal
+        {
+            Label = "10XB:16", Side = CableSide.B, ContactType = "pin 10XB (postavlja se na vozilu)",
+            TesterPoint = "B01", IsProvisional = true
+        });
+
+        cable.Wires.Add(new CableWire
+        {
+            WireNo = 1, Color = "BR", CrossSectionMm2 = 0.75m,
+            FromTerminal = "DIN:2", ToTerminal = "10XB:16"
+        });
+
+        var run = new TestRun
+        {
+            Seq = 3,
+            SpecFileName = "40W2",
+            Passed = false,
+            TestedAt = new DateTime(2026, 9, 7, 11, 47, 34),
+            Operator = "Miloš"
+        };
+
+        run.Defects.Add(ResultCsvParser.CreateDefect("OPEN A02-B01"));
+
+        return new MeasurementCardData
+        {
+            Run = run,
+            Cable = cable,
+            Vehicle = new Vehicle { Id = 1, Name = "Miloš Veliki" }
+        };
     }
 
     private static MeasurementCardData Karta()

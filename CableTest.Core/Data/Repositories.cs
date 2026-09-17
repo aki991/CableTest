@@ -33,7 +33,11 @@ public interface ICableRepository
     /// <summary>Svi kablovi, sa učitanim netovima.</summary>
     IReadOnlyList<Cable> GetAll();
 
+    /// <summary>Kablovi vozila koji se nude za ispitivanje; ugašeni se ne prikazuju.</summary>
     IReadOnlyList<Cable> GetByVehicle(long vehicleId);
+
+    /// <summary>Svi kablovi vozila, uključujući ugašene — za katalog i istoriju.</summary>
+    IReadOnlyList<Cable> GetByVehicleIncludingInactive(long vehicleId);
 
     Cable? GetById(long id);
 

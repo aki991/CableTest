@@ -47,6 +47,8 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // Gašenje ne sme da čeka: gateway se zatvara sinhrono, a IAsyncDisposable postoji zbog
+        // budućih implementacija (serijska veza) koje će imati šta da otpuste.
         (_gateway as IDisposable)?.Dispose();
         base.OnExit(e);
     }
@@ -69,9 +71,7 @@ public partial class App : Application
         var runs = new SqliteTestRunRepository(database);
         var importer = new TestRunImporter(cables, runs);
 
-        _gateway = settings.DemoMode
-            ? new FakeTesterGateway()
-            : new FileBasedTesterGateway(settings.ToGatewayOptions());
+        _gateway = CreateGateway(settings);
 
         ISoundPlayer sounds = new SwitchableSoundPlayer(new SystemSoundPlayer(), settings.SoundEnabled);
 
@@ -88,10 +88,42 @@ public partial class App : Application
             testing,
             new CatalogViewModel(vehicles, cables),
             new HistoryViewModel(runs, cables),
-            settings);
+            new CableConnectorViewModel(new MessageBoxConfirmation()),
+            settings,
+            store);
 
         MainWindow = new MainWindow(shell);
         MainWindow.Show();
+    }
+
+    /// <summary>
+    /// Bira implementaciju veze sa testerom prema podešavanjima.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Demo režim i izbor „Simulacija" vode na isti <see cref="FakeTesterGateway"/>; razlika je
+    /// samo u tome odakle stižu rezultati — demo ih pravi u pamćenju, a simulacija čita
+    /// pripremljene CSV fajlove iz zadatog foldera.
+    /// </para>
+    /// <para>
+    /// Simulacija se ne uzima dok nije uključen razvojni prekidač — vidi
+    /// <see cref="AppSettings.EffectiveResultSource"/>. Rezultat koji nije izmeren ne sme da se
+    /// nađe pred operaterom zato što je nekome ostalo nešto u <c>settings.json</c>.
+    /// </para>
+    /// </remarks>
+    private static ITesterGateway CreateGateway(AppSettings settings)
+    {
+        if (settings.DemoMode)
+        {
+            return new FakeTesterGateway();
+        }
+
+        if (settings.EffectiveResultSource == ResultSource.Simulation)
+        {
+            return new FakeTesterGateway(settings.SimulationFolder);
+        }
+
+        return new FileBasedTesterGateway(settings.ToGatewayOptions());
     }
 
     /// <summary>

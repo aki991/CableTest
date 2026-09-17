@@ -163,9 +163,12 @@ public static class CableLayout
         {
             foreach (TestDefect defect in run!.Defects)
             {
+                // Greška se ispisuje jezikom crteža — terminali i boja žice — a ne tačkama testera.
+                string text = DefectTranslator.Describe(defect, runCable);
+
                 foreach (string point in SplitPoints(defect.Points))
                 {
-                    faulty.TryAdd(point, defect.Describe());
+                    faulty.TryAdd(point, text);
                 }
             }
         }

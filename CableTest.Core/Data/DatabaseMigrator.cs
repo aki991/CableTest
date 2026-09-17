@@ -41,8 +41,17 @@ public static class DatabaseMigrator
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Primenjuje migracije koje nedostaju. Vraća verziju posle primene.</summary>
-    public static int Apply(SqliteConnection connection)
+    /// <summary>
+    /// Primenjuje migracije koje nedostaju, zaključno sa zadatom verzijom. Vraća verziju posle
+    /// primene.
+    /// </summary>
+    /// <param name="connection">Otvorena veza prema bazi.</param>
+    /// <param name="throughVersion">
+    /// Do koje verzije se ide; podrazumevano do poslednje. Postoji zbog provere nadogradnje —
+    /// test napravi bazu stare verzije, ubaci u nju podatke i tek onda primeni novu migraciju,
+    /// jer se tako ponaša i baza koju operater već ima na mašini.
+    /// </param>
+    public static int Apply(SqliteConnection connection, int throughVersion = int.MaxValue)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
@@ -58,7 +67,7 @@ public static class DatabaseMigrator
 
         foreach (Migration migration in All)
         {
-            if (migration.Version <= version)
+            if (migration.Version <= version || migration.Version > throughVersion)
             {
                 continue;
             }

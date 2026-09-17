@@ -269,26 +269,23 @@ public sealed class TestingService : IDisposable
             return;
         }
 
-        try
+        // Priprema ne baca na očekivane ishode; sve što je pošlo naopako stoji u odgovoru.
+        GatewayResult result = await _gateway.LoadProgramAsync(cable, ct).ConfigureAwait(false);
+
+        lock (_sync)
         {
-            await _gateway.PrepareTestAsync(cable, ct).ConfigureAwait(false);
-
-            string? path = _gateway.State.LastPreparedSpecPath;
-
-            lock (_sync)
+            if (result.IsOk)
             {
+                string? path = _gateway.Diagnostics.LastPreparedSpecPath;
+
                 _prepareMessage = IsDemoMode
                     ? "Demo režim: .c61 fajl nije upisan na disk. " +
                       "U stvarnom radu bi ovde stajala puna putanja upisanog fajla."
-                    : $"Upisano: {path}\n" +
-                      "U CableConnector-u izaberi ovaj spec, pritisni Download, pa pokreni test.";
+                    : $"Upisano: {path}\n" + _gateway.Capabilities.StartInstruction;
             }
-        }
-        catch (Exception ex)
-        {
-            lock (_sync)
+            else
             {
-                _prepareError = "Priprema testa nije uspela. " + ex.Message;
+                _prepareError = "Priprema testa nije uspela. " + result.Message;
             }
         }
 
@@ -411,7 +408,7 @@ public sealed class TestingService : IDisposable
 
         RefreshToday();
 
-        _gateway.TestRunReceived += OnTestRunReceived;
+        _gateway.ResultReceived += OnTestRunReceived;
         _gateway.StartMonitoring();
 
         RefreshState();
@@ -431,7 +428,7 @@ public sealed class TestingService : IDisposable
 
         lock (_sync)
         {
-            TesterGatewayState state = _gateway.State;
+            TesterGatewayState state = _gateway.Diagnostics;
 
             string status = state.IsMonitoring ? "Nadgledanje je aktivno." : "Nadgledanje nije pokrenuto.";
             string watched = state.CurrentFilePath ?? state.WatchedPath ?? "(putanja nije podešena)";
@@ -472,7 +469,7 @@ public sealed class TestingService : IDisposable
 
         _disposed = true;
         _stateTimer?.Dispose();
-        _gateway.TestRunReceived -= OnTestRunReceived;
+        _gateway.ResultReceived -= OnTestRunReceived;
         _gateway.StopMonitoring();
         (_gateway as IDisposable)?.Dispose();
     }

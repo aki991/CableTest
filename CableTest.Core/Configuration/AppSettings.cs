@@ -1,5 +1,18 @@
 namespace CableTest.Core.Configuration;
 
+/// <summary>Odakle aplikacija uzima rezultate.</summary>
+public enum ResultSource
+{
+    /// <summary>Iz CSV fajla koji piše CableConnector. Jedini izvor za rad u pogonu.</summary>
+    File,
+
+    /// <summary>
+    /// Iz pripremljenih fajlova, bez mašine. Isključivo za razvoj — vidi se samo kad je uključen
+    /// razvojni prekidač, isti onaj koji otkriva stranu „CableConnector".
+    /// </summary>
+    Simulation
+}
+
 /// <summary>
 /// Podešavanja aplikacije, onakva kakva stoje u <c>%APPDATA%\CableTest\settings.json</c>.
 /// </summary>
@@ -38,8 +51,53 @@ public sealed class AppSettings
     /// <summary>Putanja šablona MASTER.c61; prazno znači <c>templates\MASTER.c61</c> pored .exe.</summary>
     public string TemplatePath { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Da li se u bočnom meniju vidi razvojni alat „CableConnector".
+    /// </summary>
+    /// <remarks>
+    /// Podrazumevano isključen: ta strana upravlja tuđim programom preko UI Automation i nema šta
+    /// da radi pred operaterom u pogonu. Uključuje se u Podešavanjima, dok se ispituje šta je od
+    /// CableConnector-a uopšte dohvatljivo.
+    /// </remarks>
+    public bool ShowCableConnectorTool { get; set; }
+
+    /// <summary>
+    /// Izvor rezultata: fajl (pogon) ili simulacija (razvoj).
+    /// </summary>
+    /// <remarks>
+    /// Simulacija se u Podešavanjima nudi <b>samo</b> kad je uključen <see cref="ShowCableConnectorTool"/>
+    /// — isti razvojni prekidač koji otkriva stranu „CableConnector". Ako u fajlu podešavanja
+    /// zatekne simulaciju bez tog prekidača, aplikacija se vraća na fajl: rezultat koji nije
+    /// izmeren ne sme da se nađe pred operaterom slučajno.
+    /// </remarks>
+    public ResultSource ResultSource { get; set; } = ResultSource.File;
+
+    /// <summary>Koliko se najduže čeka rezultat posle pokretanja testa, u sekundama.</summary>
+    public int ResultTimeoutSeconds { get; set; } = DefaultResultTimeoutSeconds;
+
+    /// <summary>Folder sa pripremljenim CSV fajlovima za simulaciju; prazno znači bez fajlova.</summary>
+    public string SimulationFolder { get; set; } = string.Empty;
+
     /// <summary>Podrazumevana putanja rezultata.</summary>
     public const string DefaultResultPath = @"C:\Cable Linker8761";
+
+    /// <summary>Podrazumevano čekanje na rezultat, u sekundama.</summary>
+    public const int DefaultResultTimeoutSeconds = 120;
+
+    /// <summary>
+    /// Izvor rezultata sa kojim se zaista radi.
+    /// </summary>
+    /// <remarks>
+    /// Simulacija važi samo uz uključen razvojni prekidač; bez njega je uvek fajl, bez obzira na
+    /// to šta piše u <c>settings.json</c>.
+    /// </remarks>
+    public ResultSource EffectiveResultSource =>
+        ResultSource == ResultSource.Simulation && ShowCableConnectorTool
+            ? ResultSource.Simulation
+            : ResultSource.File;
+
+    /// <summary>Čekanje na rezultat, svedeno na razumne granice (1 s do 1 h).</summary>
+    public TimeSpan ResultTimeout => TimeSpan.FromSeconds(Math.Clamp(ResultTimeoutSeconds, 1, 3600));
 
     /// <summary>Kopija, da izmena u ekranu Podešavanja ne dira podešavanja koja su u upotrebi.</summary>
     public AppSettings Clone() => new()
@@ -49,7 +107,11 @@ public sealed class AppSettings
         OperatorName = OperatorName,
         SoundEnabled = SoundEnabled,
         DemoMode = DemoMode,
-        TemplatePath = TemplatePath
+        TemplatePath = TemplatePath,
+        ShowCableConnectorTool = ShowCableConnectorTool,
+        ResultSource = ResultSource,
+        ResultTimeoutSeconds = ResultTimeoutSeconds,
+        SimulationFolder = SimulationFolder
     };
 
     /// <summary>Podešavanja pretvorena u ono što gateway očekuje.</summary>

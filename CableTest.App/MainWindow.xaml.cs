@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Threading;
 using CableTest.App.ViewModels;
@@ -26,9 +27,15 @@ public partial class MainWindow : Window
         };
         _statusTimer.Tick += (_, _) => _shell.Testing.RefreshState();
 
+        // Sakrivanje razvojnog alata dok se on gleda ostavilo bi prazan ekran bez stavke u meniju.
+        _shell.PropertyChanged += OnShellPropertyChanged;
+
         Loaded += OnLoaded;
         Closed += OnClosed;
     }
+
+    /// <summary>Redni broj stavke „CableConnector" u bočnom meniju; poslednja je.</summary>
+    private const int CableConnectorIndex = 6;
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
@@ -40,7 +47,18 @@ public partial class MainWindow : Window
     private void OnClosed(object? sender, EventArgs e)
     {
         _statusTimer.Stop();
+        _shell.PropertyChanged -= OnShellPropertyChanged;
         _shell.Dispose();
+    }
+
+    private void OnShellPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ShellViewModel.ShowCableConnector)
+            && !_shell.ShowCableConnector
+            && Meni.SelectedIndex == CableConnectorIndex)
+        {
+            Meni.SelectedIndex = 0;
+        }
     }
 
     // -----------------------------------------------------------------------------------

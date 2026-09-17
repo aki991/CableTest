@@ -91,7 +91,7 @@ public sealed class TestingViewModelTests : IDisposable
         Assert.Equal("PROŠAO", vm.OutcomeText);
         Assert.Equal("KABL JE ISPRAVAN", vm.OutcomeSubText);
         Assert.True(vm.HasResult);
-        Assert.Contains("M30-W1", vm.ResultCableText, StringComparison.Ordinal);
+        Assert.Contains("40-W1.1", vm.ResultCableText, StringComparison.Ordinal);
         Assert.Equal("Miloš", vm.ResultOperatorText);
         Assert.True(vm.MeasurementCardCommand.CanExecute(null));
     }
@@ -197,11 +197,11 @@ public sealed class TestingViewModelTests : IDisposable
         Vehicle drugo = DodajVozilo("Golf", ("G100-W1", "G100W1"), ("G100-W2", "G100W2"));
         TestingViewModel vm = Start();
 
-        // Vozilo "Miloš Veliki" iz kataloga ima dvadeset kablova, M30-W1 … M30-W20.
+        // Vozilo „Miloš Veliki“ ima dvanaest kablova sa crteža, redom po stranama crteža.
         vm.SelectedVehicle = vm.Vehicles.First(v => v.Name == "Miloš Veliki");
-        Assert.Equal(20, vm.Cables.Count);
-        Assert.Equal("M30-W1", vm.Cables.First().Code);
-        Assert.Equal("M30-W20", vm.Cables.Last().Code);
+        Assert.Equal(12, vm.Cables.Count);
+        Assert.Equal("40-W1.1", vm.Cables.First().Code);
+        Assert.Equal("40-W5", vm.Cables.Last().Code);
 
         vm.SelectedVehicle = vm.Vehicles.First(v => v.Id == drugo.Id);
         Assert.Equal(new[] { "G100-W1", "G100-W2" }, vm.Cables.Select(c => c.Code));
@@ -214,7 +214,7 @@ public sealed class TestingViewModelTests : IDisposable
         TestingViewModel vm = Start();
 
         // Pri pokretanju se bira prvo vozilo iz kataloga i njegov prvi kabl.
-        Assert.Equal("M30-W1", vm.SelectedCable!.Code);
+        Assert.Equal("40-W1.1", vm.SelectedCable!.Code);
         Assert.Equal(vm.SelectedCable.Nets.Count, vm.Nets.Count);
         Assert.StartsWith("1. ", vm.Nets.First(), StringComparison.Ordinal);
         Assert.EndsWith(vm.SelectedCable.Nets[0].Points, vm.Nets.First(), StringComparison.Ordinal);
@@ -254,8 +254,217 @@ public sealed class TestingViewModelTests : IDisposable
 
         Assert.True(vm.HasPrepareMessage);
         Assert.False(vm.HasPrepareError);
-        Assert.Contains("Download", vm.PrepareMessage!, StringComparison.Ordinal);
+
+        // Uputstvo dolazi iz Capabilities, pa se poruka menja zajedno sa implementacijom.
+        Assert.Contains(vm.StartInstruction, vm.PrepareMessage!, StringComparison.Ordinal);
         Assert.Single(_gateway.PreparedCables);
+        Assert.Equal(TesterState.ProgramLoaded, vm.TesterState);
+    }
+
+    /// <summary>
+    /// Lažni gateway ume sam da pokrene test, pa ekran nudi dugme; rad preko fajlova ne ume, pa
+    /// umesto dugmeta stoji uputstvo da se pritisne START na mašini.
+    /// </summary>
+    [Fact]
+    public void DugmePokreniTest_PostojiSamoKadGatewayUmeDaPokreneTest()
+    {
+        TestingViewModel vm = Start();
+
+        Assert.True(vm.CanShowStartButton);
+        Assert.False(vm.ShowStartInstruction);
+        Assert.False(vm.CanStartTest);   // program još nije pripremljen
+    }
+
+    [Fact]
+    public async Task PokreniTest_PoslePripreme_DovodiRezultatIzSimulacije()
+    {
+        _gateway.StartDelay = TimeSpan.Zero;
+        _settings.ResultTimeoutSeconds = 5;
+
+        TestingViewModel vm = Start();
+
+        await vm.PrepareTestCommand.ExecuteAsync();
+        Assert.True(vm.CanStartTest);
+
+        await vm.StartTestCommand.ExecuteAsync();
+
+        // Rezultat stiže sa pozadinske niti i prebacuje se na nit prikaza, pa se sačeka da se
+        // taj posao izvrši — u pogonu to radi WPF dispečer, ovde nit testa.
+        await Sacekaj(() => vm.Outcome == OutcomeState.Pass);
+
+        Assert.True(vm.HasResult);
+        Assert.False(vm.IsWaitingForResult);
+    }
+
+    /// <summary>Čeka da se izvrši posao prebačen na nit prikaza; najduže sekundu.</summary>
+    private static async Task Sacekaj(Func<bool> uslov)
+    {
+        for (int i = 0; i < 100 && !uslov(); i++)
+        {
+            await Task.Delay(10);
+        }
+
+        Assert.True(uslov(), "Prikaz se nije osvežio u zadatom vremenu.");
+    }
+
+    /// <summary>Dok se čeka rezultat, Panel 3 to i pokazuje; prekid vraća ekran na čekanje.</summary>
+    [Fact]
+    public async Task PokreniTest_PrekidCekanja_VracaEkranNaCekanje()
+    {
+        _gateway.Scenario = FakeScenario.Timeout;
+        _gateway.StartDelay = TimeSpan.Zero;
+        _settings.ResultTimeoutSeconds = 3600;
+
+        TestingViewModel vm = Start();
+
+        await vm.PrepareTestCommand.ExecuteAsync();
+
+        Task pokretanje = vm.StartTestCommand.ExecuteAsync();
+
+        Assert.True(vm.IsWaitingForResult);
+        Assert.Equal(OutcomeState.Running, vm.Outcome);
+
+        vm.CancelWaitCommand.Execute(null);
+        await pokretanje;
+
+        Assert.False(vm.IsWaitingForResult);
+        Assert.Equal(OutcomeState.Waiting, vm.Outcome);
+    }
+
+    /// <summary>
+    /// Rezultat koji ne stigne nije „prošao" — Panel 3 mora jasno da kaže da kabl nije ispitan.
+    /// </summary>
+    [Fact]
+    public async Task PokreniTest_KadRezultatNeStigne_PrikazujeIstekVremena()
+    {
+        _gateway.Scenario = FakeScenario.Timeout;
+        _gateway.StartDelay = TimeSpan.Zero;
+        _settings.ResultTimeoutSeconds = 1;
+
+        TestingViewModel vm = Start();
+
+        await vm.PrepareTestCommand.ExecuteAsync();
+        await vm.StartTestCommand.ExecuteAsync();
+
+        Assert.Equal(OutcomeState.TimedOut, vm.Outcome);
+        Assert.Equal("NEMA REZULTATA", vm.OutcomeText);
+        Assert.False(vm.HasResult);
+        Assert.True(vm.HasProblem);
+        Assert.Equal(TesterState.Failed, vm.TesterState);
+    }
+
+    /// <summary>Kod FAIL se vidi koja mreža nije prošla i šta joj je.</summary>
+    [Fact]
+    public void PaoRezultat_PrikazujeMrezeKojeNisuProsle()
+    {
+        TestingViewModel vm = Start();
+
+        // Tačke pripadaju izabranom kablu: A01 je DIN:1, A02 je DIN:2.
+        _gateway.ReceiveFail(Kabl(), "SHORT A01-A02");
+
+        Assert.Equal(OutcomeState.Fail, vm.Outcome);
+        Assert.True(vm.HasFailedNets);
+
+        // Greška se upisuje uz svaku mrežu koja dodiruje pogođene tačke.
+        Assert.All(vm.FailedNetRows, red => Assert.Contains("Kratak spoj", red.Defect, StringComparison.Ordinal));
+        Assert.All(vm.FailedNetRows, red => Assert.Equal(NetRow.Failed, red.Status));
+
+        Assert.Contains(
+            vm.FailedNetRows[0].Ordinal.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            vm.FailedNetsSummary,
+            StringComparison.Ordinal);
+
+        // Mreže koje nisu pogođene ostaju van spiska.
+        Assert.True(vm.FailedNetRows.Count <= vm.NetRows.Count);
+    }
+
+    /// <summary>
+    /// Greška se operateru pokazuje jezikom crteža: terminal, boja žice, pa tačka testera u
+    /// zagradi. Tačka ostaje da bi se poruka mogla uporediti sa CSV-om testera.
+    /// </summary>
+    [Fact]
+    public void FailRezultat_PrevodiTackeTesteraUTerminaleIBojuZice()
+    {
+        TestingViewModel vm = Start();
+
+        vm.SelectedCable = vm.Cables.First(c => c.SpecFileName == "40W2");
+        _gateway.ReceiveFail(vm.SelectedCable!, "OPEN A02-B01");
+
+        Assert.Equal("Prekid: DIN:2 → 10XB:16, žica BR (A02–B01)", Assert.Single(vm.ResultDefects));
+    }
+
+    /// <summary>Tačka koje nema u priključnoj tabeli ostaje prikazana onakva kakva je.</summary>
+    [Fact]
+    public void FailRezultat_NepoznataTacka_OstajeKakvaJe()
+    {
+        TestingViewModel vm = Start();
+
+        _gateway.ReceiveFail(Kabl(), "SHORT P31-P32");
+
+        Assert.Equal("Kratak spoj između tačaka P31 i P32", Assert.Single(vm.ResultDefects));
+    }
+
+    // -----------------------------------------------------------------------------------
+    // Podaci sa crteža
+    // -----------------------------------------------------------------------------------
+
+    [Fact]
+    public void IzborKabla_PrikazujeOznakuTipDuzinuIProvodnike()
+    {
+        TestingViewModel vm = Start();
+
+        vm.SelectedCable = vm.Cables.First(c => c.SpecFileName == "40W5");
+
+        Assert.Equal("=40-W5", vm.SelectedDesignationText);
+        Assert.Equal("Snop FLRY 6x1 mm²", vm.SelectedCableTypeText);
+        Assert.Equal("2 m", vm.SelectedLengthText);
+        Assert.Equal("40_grupa_2_0.pdf, strana 12", vm.SelectedSourceText);
+
+        Assert.True(vm.HasWires);
+        Assert.Equal(9, vm.Wires.Count);
+        Assert.Equal("BR", vm.Wires[0].Color);
+        Assert.Equal("1 mm²", vm.Wires[0].CrossSectionText);
+        Assert.Equal("10XC:30", vm.Wires[0].FromTerminal);
+        Assert.Equal("BUK-BR", vm.Wires[0].ToTerminal);
+
+        // Ispod tabele provodnika stoje izvedeni netovi — ono što zaista ide u tester.
+        Assert.Equal(6, vm.Nets.Count);
+        Assert.Equal("6. C06-D06-D07-D08-D09", vm.Nets[^1]);
+    }
+
+    /// <summary>
+    /// Demo simulacija radi nad izvedenim netovima i daje poruke u istom obliku kao pravi tester:
+    /// prekid unutar neta, kratak spoj između dva neta.
+    /// </summary>
+    [Fact]
+    public void DemoSimulacija_RadiNadIzvedenimNetovima()
+    {
+        _settings.DemoMode = true;
+        TestingViewModel vm = Start();
+
+        vm.SelectedCable = vm.Cables.First(c => c.SpecFileName == "40W2");
+        Assert.True(vm.CanSimulate);
+
+        vm.SimulateFailCommand.Execute(null);
+
+        Assert.Equal(OutcomeState.Fail, vm.Outcome);
+        Assert.Equal(
+            new[]
+            {
+                "Prekid: DIN:2 → 10XB:16, žica BR (A02–B01)",
+                "Kratak spoj: DIN:2 → DIN:1 (A02–A01)"
+            },
+            vm.ResultDefects);
+    }
+
+    /// <summary>Dok adapter nije napravljen, operater mora da vidi da je raspored privremen.</summary>
+    [Fact]
+    public void IzborKabla_SaPrivremenomPrikljucnomTabelom_PrikazujeUpozorenje()
+    {
+        TestingViewModel vm = Start();
+
+        Assert.True(vm.HasProvisionalPoints);
+        Assert.Contains("privremena", vm.ProvisionalNoticeText, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -470,7 +679,7 @@ public sealed class TestingViewModelTests : IDisposable
         return _viewModel;
     }
 
-    private Cable Kabl() => _cables.GetBySpecFileName("M30-W1")!;
+    private Cable Kabl() => _cables.GetBySpecFileName("40W1-1")!;
 
     private Vehicle DodajVozilo(string ime, params (string Code, string Spec)[] kablovi)
     {

@@ -238,6 +238,20 @@
                                 <TextBlock Text="Podešavanja" VerticalAlignment="Center" />
                             </StackPanel>
                         </ListBoxItem>
+
+                        <!--
+                            Razvojni alat; stoji poslednji i podrazumevano se ne vidi. Poslednji je
+                            i zato što se stavke biraju po rednom broju: sakrivena stavka na kraju
+                            ne pomera nijedan postojeći ekran.
+                        -->
+                        <ListBoxItem Visibility="{Binding ShowCableConnector, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaKabl}"
+                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                                      Margin="0,0,14,0" />
+                                <TextBlock Text="CableConnector" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ListBoxItem>
                     </ListBox>
                 </DockPanel>
             </Border>
@@ -338,6 +352,9 @@
                     </TabItem>
                     <TabItem Header="Podešavanja">
                         <views:PodesavanjaView />
+                    </TabItem>
+                    <TabItem Header="CableConnector">
+                        <views:CableConnectorView DataContext="{Binding CableConnector}" />
                     </TabItem>
                 </TabControl>
 

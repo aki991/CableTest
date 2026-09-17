@@ -9,17 +9,11 @@ public class ResultCsvParserTests
 {
     private const string CrLf = "\r\n";
 
-    /// <summary>Stvarni fajl iz pogona: dva testa, drugi sa tri kratka spoja.</summary>
-    private const string RealSample =
-        "File Name: PROBA1" + CrLf +
-        "Model:8761NK" + CrLf +
-        "O/S:5KOHM" + CrLf +
-        "-------------------------------" + CrLf +
-        "001 O01-O02-O31-O32" + CrLf +
-        "-------------------------------" + CrLf +
-        "Seq.,Filename,Pass,Date,Time,Lots,Barcode1,Operater,STEP 1,O/S TEST,unit," + CrLf +
-        "1,PROBA1,pass,2026/09/07,11:44:11,,,Andreja,PASS,PASS," + CrLf +
-        "2,PROBA1,fail,2026/09/07,11:47:34,,,Andreja,FAIL, SHORT O01-O02; SHORT O01-O31; SHORT O01-O32;FAIL," + CrLf;
+    /// <summary>
+    /// Stvarni fajl iz pogona: dva testa, drugi sa tri kratka spoja.
+    /// </summary>
+    /// <remarks>Isti uzorak koriste i testovi veze sa testerom; vidi <see cref="CsvSamples"/>.</remarks>
+    private const string RealSample = CsvSamples.RealFile;
 
     [Fact]
     public void ParseAll_CitaObaRedaIzStvarnogFajla()

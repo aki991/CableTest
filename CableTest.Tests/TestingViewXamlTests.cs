@@ -55,6 +55,7 @@ public class TestingViewXamlTests
             typeof(PortUsage),
             typeof(NetRow),
             typeof(Cable),
+            typeof(CableWire),
             typeof(Vehicle));
 
         Assert.Empty(NepoznateVeze(File.ReadAllText(XamlPath), svojstva));
@@ -124,6 +125,7 @@ public class TestingViewXamlTests
     [InlineData("Test programi")]
     [InlineData("Istorija")]
     [InlineData("Podešavanja")]
+    [InlineData("CableConnector")]
     [InlineData("Simuliraj PROŠAO")]
     [InlineData("Simuliraj PAO")]
     [InlineData("Testova danas:")]
@@ -157,6 +159,7 @@ public class TestingViewXamlTests
                 _ = new global::CableTest.App.Views.TestProgramiView();
                 _ = new global::CableTest.App.Views.IstorijaView();
                 _ = new global::CableTest.App.Views.PodesavanjaView();
+                _ = new global::CableTest.App.Views.CableConnectorView();
             }
             catch (Exception ex)
             {

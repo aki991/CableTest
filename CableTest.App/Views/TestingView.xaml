@@ -146,18 +146,43 @@
                     <Rectangle Height="1" Fill="{StaticResource IvicaBrush}" Margin="0,12,0,18" />
                 </StackPanel>
 
-                <!-- Dugme koje operater zaista pritiska stoji uz dno kartice. -->
-                <Button DockPanel.Dock="Bottom"
-                        Style="{StaticResource GlavnoDugmeStyle}"
-                        Command="{Binding PrepareTestCommand}"
-                        Margin="0,16,0,0">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="{StaticResource IkonaPokreni}" Fill="{StaticResource BelaBrush}"
-                              Stretch="Uniform" Width="17" Height="17" Margin="0,0,11,0"
-                              VerticalAlignment="Center" />
-                        <TextBlock Text="Pripremi test program" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
+                <!-- Dugmad koja operater zaista pritiska stoje uz dno kartice. -->
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,16,0,0">
+                    <Button Style="{StaticResource GlavnoDugmeStyle}"
+                            Command="{Binding PrepareTestCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource IkonaProgram}" Stroke="{StaticResource CrnaBrush}"
+                                  Style="{StaticResource IkonaStyle}"
+                                  Width="17" Height="17" Margin="0,0,11,0"
+                                  VerticalAlignment="Center" />
+                            <TextBlock Text="Pripremi test program" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <!--
+                        „Pokreni test" postoji samo kad veza to ume. Kod rada preko fajlova START
+                        pritiska operater na mašini — tada umesto dugmeta stoji uputstvo.
+                    -->
+                    <Button Style="{StaticResource BigButtonStyle}" Margin="0,10,0,0"
+                            Command="{Binding StartTestCommand}"
+                            Visibility="{Binding CanShowStartButton, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource IkonaPokreni}"
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Stretch="Uniform" Width="15" Height="15" Margin="0,0,11,0"
+                                  VerticalAlignment="Center" />
+                            <TextBlock Text="Pokreni test" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <Border Background="{StaticResource WarningBackBrush}"
+                            BorderBrush="{StaticResource WarningBorderBrush}" BorderThickness="1"
+                            CornerRadius="8" Padding="12,10" Margin="0,10,0,0"
+                            Visibility="{Binding ShowStartInstruction, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding StartInstruction}" TextWrapping="Wrap"
+                                   FontSize="13.5" Foreground="{StaticResource WarningBrush}" />
+                    </Border>
+                </StackPanel>
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
@@ -178,6 +203,10 @@
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
@@ -216,7 +245,49 @@
                                         <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedSpecFileText}"
                                                    Style="{StaticResource PodatakVrednostStyle}"
                                                    FontFamily="Consolas" />
+
+                                        <!-- Podaci sa elektro crteža -->
+                                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Oznaka sa crteža:"
+                                                   Style="{StaticResource PodatakNazivStyle}" />
+                                        <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SelectedDesignationText}"
+                                                   Style="{StaticResource PodatakVrednostStyle}"
+                                                   FontFamily="Consolas" />
+
+                                        <TextBlock Grid.Row="7" Grid.Column="0" Text="Tip kabla:"
+                                                   Style="{StaticResource PodatakNazivStyle}" />
+                                        <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SelectedCableTypeText}"
+                                                   Style="{StaticResource PodatakVrednostStyle}"
+                                                   TextWrapping="Wrap" />
+
+                                        <TextBlock Grid.Row="8" Grid.Column="0" Text="Dužina:"
+                                                   Style="{StaticResource PodatakNazivStyle}" />
+                                        <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding SelectedLengthText}"
+                                                   Style="{StaticResource PodatakVrednostStyle}" />
+
+                                        <TextBlock Grid.Row="9" Grid.Column="0" Text="Dokumentacija:"
+                                                   Style="{StaticResource PodatakNazivStyle}" />
+                                        <TextBlock Grid.Row="9" Grid.Column="1" Text="{Binding SelectedSourceText}"
+                                                   Style="{StaticResource PodatakVrednostStyle}"
+                                                   TextWrapping="Wrap" />
                                     </Grid>
+
+                                    <!--
+                                        Dok adapter nije napravljen, raspored tačaka je izabran „na papiru".
+                                        Operater to mora da vidi: rezultat po pogrešnom rasporedu ne znači ništa.
+                                    -->
+                                    <Border Background="{StaticResource WarningBackBrush}"
+                                            BorderBrush="{StaticResource WarningBorderBrush}" BorderThickness="1"
+                                            CornerRadius="8" Padding="12,10" Margin="0,8,0,4"
+                                            Visibility="{Binding HasProvisionalPoints, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="{Binding ProvisionalNoticeText}" TextWrapping="Wrap"
+                                                   FontSize="13" Foreground="{StaticResource WarningBrush}" />
+                                    </Border>
+
+                                    <!-- Napomene sa crteža, doslovno -->
+                                    <TextBlock Text="{Binding SelectedNotesText}" TextWrapping="Wrap"
+                                               FontSize="12.5" Margin="0,6,0,4"
+                                               Foreground="{StaticResource Tekst3Brush}"
+                                               Visibility="{Binding HasSelectedNotes, Converter={StaticResource BoolToVisibility}}" />
 
                                     <!-- Poruka o pripremljenom test programu -->
                                     <Border Background="{StaticResource AkcenatPrigusenBrush}"
@@ -241,6 +312,81 @@
                                         <TextBlock Text="{Binding PrepareError}" TextWrapping="Wrap"
                                                    FontSize="13.5" Foreground="{StaticResource ErrorBrush}" />
                                     </Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ====================== Provodnici i izvedeni netovi ====================== -->
+                        <!--
+                            Tabela provodnika je prepis crteža i ne zavisi od testera; net lista
+                            ispod nje se iz nje IZVODI, kroz priključnu tabelu terminala. Zato
+                            stoje jedna uz drugu: operater vidi i kabl i ono što ide u tester.
+                        -->
+                        <Border Style="{StaticResource OdeljakStyle}" Margin="0,0,0,16"
+                                Visibility="{Binding HasWires, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel>
+                                <Border Background="{StaticResource Panel3Brush}"
+                                        BorderBrush="{StaticResource IvicaBrush}" BorderThickness="0,0,0,1"
+                                        CornerRadius="10,10,0,0" Padding="16,12">
+                                    <TextBlock Text="Provodnici sa crteža" Style="{StaticResource OdeljakNaslovStyle}" />
+                                </Border>
+
+                                <StackPanel Margin="16,12,16,14">
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="26" />
+                                            <ColumnDefinition Width="95" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Br." Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                        <TextBlock Grid.Column="1" Text="Boja" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                        <TextBlock Grid.Column="2" Text="Presek" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                        <TextBlock Grid.Column="3" Text="Od → do" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                    </Grid>
+
+                                    <ItemsControl ItemsSource="{Binding Wires}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,3" ToolTip="{Binding Notes}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="26" />
+                                                        <ColumnDefinition Width="95" />
+                                                        <ColumnDefinition Width="70" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock Grid.Column="0" Text="{Binding WireNo}"
+                                                               Style="{StaticResource CelijaJednoprostornaStyle}" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding Color}"
+                                                               Style="{StaticResource CelijaStyle}" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding CrossSectionText}"
+                                                               Style="{StaticResource CelijaJednoprostornaStyle}" />
+                                                    <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding FromTerminal}"
+                                                                   Style="{StaticResource CelijaJednoprostornaStyle}" />
+                                                        <TextBlock Text=" → " Style="{StaticResource CelijaStyle}" />
+                                                        <TextBlock Text="{Binding ToTerminal}"
+                                                                   Style="{StaticResource CelijaJednoprostornaStyle}"
+                                                                   TextWrapping="Wrap" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <TextBlock Text="Izvedeni netovi (ono što ide u tester)"
+                                               Style="{StaticResource SectionTitleStyle}" Margin="0,14,0,6" />
+
+                                    <ItemsControl ItemsSource="{Binding Nets}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="13"
+                                                           Margin="0,2" TextWrapping="Wrap"
+                                                           Foreground="{StaticResource TekstBrush}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -358,6 +504,25 @@
                                         <Setter Property="BorderBrush" Value="{StaticResource FailBorderBrush}" />
                                         <Setter Property="TextElement.Foreground" Value="{StaticResource FailBrush}" />
                                     </DataTrigger>
+
+                                    <!-- Test u toku: ni prošao ni pao — mora da se razlikuje od oba. -->
+                                    <DataTrigger Binding="{Binding Outcome}" Value="{x:Static vm:OutcomeState.Running}">
+                                        <Setter Property="Background" Value="{StaticResource AkcenatPrigusenBrush}" />
+                                        <Setter Property="BorderBrush" Value="{StaticResource IvicaJakaBrush}" />
+                                        <Setter Property="TextElement.Foreground" Value="{StaticResource BelaBrush}" />
+                                    </DataTrigger>
+
+                                    <!-- Istek vremena i greška: žuto, jer kabl NIJE ispitan. -->
+                                    <DataTrigger Binding="{Binding Outcome}" Value="{x:Static vm:OutcomeState.TimedOut}">
+                                        <Setter Property="Background" Value="{StaticResource WarningBackBrush}" />
+                                        <Setter Property="BorderBrush" Value="{StaticResource WarningBorderBrush}" />
+                                        <Setter Property="TextElement.Foreground" Value="{StaticResource WarningBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Outcome}" Value="{x:Static vm:OutcomeState.Error}">
+                                        <Setter Property="Background" Value="{StaticResource ErrorBackBrush}" />
+                                        <Setter Property="BorderBrush" Value="{StaticResource FailBorderBrush}" />
+                                        <Setter Property="TextElement.Foreground" Value="{StaticResource ErrorBrush}" />
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
@@ -404,6 +569,18 @@
                                                     <Setter Property="Data" Value="{StaticResource IkonaUzvicnik}" />
                                                     <Setter Property="Stroke" Value="{StaticResource FailBackBrush}" />
                                                 </DataTrigger>
+                                                <DataTrigger Binding="{Binding Outcome}" Value="{x:Static vm:OutcomeState.Running}">
+                                                    <Setter Property="Data" Value="{StaticResource IkonaOsvezi}" />
+                                                    <Setter Property="Stroke" Value="{StaticResource BelaBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Outcome}" Value="{x:Static vm:OutcomeState.TimedOut}">
+                                                    <Setter Property="Data" Value="{StaticResource IkonaSat}" />
+                                                    <Setter Property="Stroke" Value="{StaticResource WarningBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Outcome}" Value="{x:Static vm:OutcomeState.Error}">
+                                                    <Setter Property="Data" Value="{StaticResource IkonaUzvicnik}" />
+                                                    <Setter Property="Stroke" Value="{StaticResource ErrorBrush}" />
+                                                </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Path.Style>
@@ -417,6 +594,64 @@
                                 <TextBlock Text="{Binding OutcomeSubText}" FontSize="16" FontWeight="SemiBold"
                                            Opacity="0.85" Margin="0,6,0,0" TextWrapping="Wrap" MaxWidth="330" />
                             </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ====================== Stanje veze sa testerom ====================== -->
+                    <Grid Margin="4,12,4,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="{Binding TesterStateText}" TextWrapping="Wrap"
+                                   Style="{StaticResource StatusLabelStyle}" FontSize="14"
+                                   VerticalAlignment="Center" />
+
+                        <Button Grid.Column="1" Content="Prekini čekanje"
+                                Style="{StaticResource SmallButtonStyle}" Margin="10,0,0,0"
+                                Command="{Binding CancelWaitCommand}"
+                                Visibility="{Binding IsWaitingForResult, Converter={StaticResource BoolToVisibility}}" />
+                    </Grid>
+
+                    <!-- ====================== Mreže koje nisu prošle ====================== -->
+                    <Border Background="{StaticResource FailBackBrush}"
+                            BorderBrush="{StaticResource FailBorderBrush}" BorderThickness="1"
+                            CornerRadius="8" Padding="14,12" Margin="0,14,0,0"
+                            Visibility="{Binding HasFailedNets, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding FailedNetsSummary}" FontSize="14.5" FontWeight="SemiBold"
+                                       Foreground="{StaticResource FailBrush}" TextWrapping="Wrap"
+                                       Margin="0,0,0,8" />
+
+                            <ItemsControl ItemsSource="{Binding FailedNetRows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0" FontFamily="Consolas" FontSize="13.5"
+                                                       Foreground="{StaticResource FailBrush}"
+                                                       Margin="0,0,10,0" VerticalAlignment="Top">
+                                                <Run Text="mreža" />
+                                                <Run Text="{Binding Ordinal, Mode=OneWay}" />
+                                            </TextBlock>
+
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Points}" FontFamily="Consolas"
+                                                           FontSize="13.5" TextWrapping="Wrap"
+                                                           Foreground="{StaticResource TekstBrush}" />
+                                                <TextBlock Text="{Binding Defect}" FontSize="13"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{StaticResource FailBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </Border>
 

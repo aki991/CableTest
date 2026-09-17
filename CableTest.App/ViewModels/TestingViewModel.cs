@@ -23,7 +23,16 @@ public enum OutcomeState
     Pass,
 
     /// <summary>Poslednji uživo rezultat je pao.</summary>
-    Fail
+    Fail,
+
+    /// <summary>Test je pokrenut i rezultat se čeka.</summary>
+    Running,
+
+    /// <summary>Rezultat nije stigao u zadatom vremenu.</summary>
+    TimedOut,
+
+    /// <summary>Radnja nad testerom nije uspela.</summary>
+    Error
 }
 
 /// <summary>
@@ -76,6 +85,13 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
     private bool _started;
     private bool _disposed;
 
+    /// <summary>Nit na kojoj se sme dirati prikaz; gateway okida događaje sa pozadinskih niti.</summary>
+    private SynchronizationContext? _ui;
+
+    private CancellationTokenSource? _waiting;
+    private TesterState _testerState = TesterState.Idle;
+    private string _testerStateText = "Test nije pripremljen.";
+
     public TestingViewModel(
         ITesterGateway gateway,
         IVehicleRepository vehicles,
@@ -103,6 +119,8 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
         _fake = gateway as FakeTesterGateway;
 
         PrepareTestCommand = new AsyncRelayCommand(PrepareTestAsync, () => SelectedCable is not null, ShowPrepareError);
+        StartTestCommand = new AsyncRelayCommand(StartTestAsync, () => CanStartTest, ShowPrepareError);
+        CancelWaitCommand = new RelayCommand(CancelWait, () => IsWaitingForResult);
         MeasurementCardCommand = new RelayCommand(ShowMeasurementCard, () => HasResult);
         SimulatePassCommand = new RelayCommand(() => Simulate(passed: true), () => CanSimulate);
         SimulateFailCommand = new RelayCommand(() => Simulate(passed: false), () => CanSimulate);
@@ -142,7 +160,50 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>Net lista izabranog kabla, spremna za prikaz („1. O01-O02-O31-O32").</summary>
+    /// <remarks>Za kabl sa ožičenjem je ovo <b>izvedena</b> lista — vidi <see cref="NetBuilder"/>.</remarks>
     public ObservableCollection<string> Nets { get; } = new();
+
+    /// <summary>Provodnici izabranog kabla, redom sa crteža.</summary>
+    public ObservableCollection<CableWire> Wires { get; } = new();
+
+    /// <summary>Da li izabrani kabl uopšte ima uneto ožičenje.</summary>
+    public bool HasWires => Wires.Count > 0;
+
+    /// <summary>Oznaka izabranog kabla sa elektro crteža; „—" kad je nema.</summary>
+    public string SelectedDesignationText => string.IsNullOrWhiteSpace(SelectedCable?.Designation)
+        ? NetRow.Unknown
+        : SelectedCable!.Designation;
+
+    /// <summary>Tip izabranog kabla sa crteža.</summary>
+    public string SelectedCableTypeText => string.IsNullOrWhiteSpace(SelectedCable?.CableType)
+        ? NetRow.Unknown
+        : SelectedCable!.CableType;
+
+    /// <summary>Dužina izabranog kabla.</summary>
+    public string SelectedLengthText => SelectedCable?.LengthText ?? NetRow.Unknown;
+
+    /// <summary>Iz kog dokumenta i sa koje strane su podaci o kablu.</summary>
+    public string SelectedSourceText => SelectedCable?.SourceText ?? NetRow.Unknown;
+
+    /// <summary>Napomene sa crteža za izabrani kabl.</summary>
+    public string SelectedNotesText => SelectedCable?.Notes ?? string.Empty;
+
+    /// <summary>Da li izabrani kabl ima napomene.</summary>
+    public bool HasSelectedNotes => !string.IsNullOrWhiteSpace(SelectedNotesText);
+
+    /// <summary>
+    /// Da li je priključna tabela izabranog kabla privremena.
+    /// </summary>
+    /// <remarks>
+    /// Dok adapter nije napravljen, tačke testera su izabrane „na papiru". Operater to mora da
+    /// vidi na ekranu: ako se kabl ispituje po rasporedu koji ne odgovara priboru na stolu,
+    /// rezultat ne znači ništa.
+    /// </remarks>
+    public bool HasProvisionalPoints => SelectedCable?.HasProvisionalPoints ?? false;
+
+    /// <summary>Tekst žute trake o privremenoj priključnoj tabeli.</summary>
+    public string ProvisionalNoticeText =>
+        "Priključna tabela je privremena — raspored tačaka nije potvrđen na adapteru.";
 
     public Vehicle? SelectedVehicle
     {
@@ -167,6 +228,7 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
             }
 
             LoadNets();
+            LoadWires();
             LoadPorts();
             LoadNetRows();
             PrepareMessage = null;
@@ -182,7 +244,15 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
                 nameof(SelectedNetCount),
                 nameof(SelectedPointCount),
                 nameof(SelectedPortCount),
-                nameof(SelectedSpecFileText));
+                nameof(SelectedSpecFileText),
+                nameof(SelectedDesignationText),
+                nameof(SelectedCableTypeText),
+                nameof(SelectedLengthText),
+                nameof(SelectedSourceText),
+                nameof(SelectedNotesText),
+                nameof(HasSelectedNotes),
+                nameof(HasWires),
+                nameof(HasProvisionalPoints));
         }
     }
 
@@ -213,6 +283,49 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
     // -----------------------------------------------------------------------------------
 
     public AsyncRelayCommand PrepareTestCommand { get; }
+
+    /// <summary>Pokreće test; vidljivo samo kad gateway to ume.</summary>
+    public AsyncRelayCommand StartTestCommand { get; }
+
+    /// <summary>Prekida čekanje na rezultat. Test na mašini se time ne zaustavlja.</summary>
+    public RelayCommand CancelWaitCommand { get; }
+
+    /// <summary>Da li ova implementacija ume sama da pokrene test.</summary>
+    public bool CanShowStartButton => _gateway.Capabilities.CanStartTest;
+
+    /// <summary>Uputstvo operateru kad aplikacija ne može sama da pokrene test.</summary>
+    public string StartInstruction => _gateway.Capabilities.StartInstruction;
+
+    /// <summary>Da li se uputstvo („pritisnite START na mašini") uopšte prikazuje.</summary>
+    public bool ShowStartInstruction => !CanShowStartButton;
+
+    /// <summary>Da li se dugme „Pokreni test" sme pritisnuti.</summary>
+    public bool CanStartTest =>
+        CanShowStartButton && TesterState == TesterState.ProgramLoaded && !IsWaitingForResult;
+
+    /// <summary>Faza u kojoj je veza sa testerom.</summary>
+    public TesterState TesterState
+    {
+        get => _testerState;
+        private set
+        {
+            if (Set(ref _testerState, value))
+            {
+                RaiseAll(nameof(CanStartTest));
+                StartTestCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>Stanje veze rečeno operateru — stoji uz Panel 3.</summary>
+    public string TesterStateText
+    {
+        get => _testerStateText;
+        private set => Set(ref _testerStateText, value);
+    }
+
+    /// <summary>Da li se upravo čeka rezultat.</summary>
+    public bool IsWaitingForResult => _waiting is not null;
 
     /// <summary>Putanja upisanog .c61 fajla i uputstvo operateru; <c>null</c> dok se ne pripremi test.</summary>
     public string? PrepareMessage
@@ -256,7 +369,14 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
         {
             if (Set(ref _outcome, value))
             {
-                RaiseAll(nameof(OutcomeText), nameof(OutcomeSubText), nameof(HasResult), nameof(IsWaiting));
+                RaiseAll(
+                    nameof(OutcomeText),
+                    nameof(OutcomeSubText),
+                    nameof(OutcomeErrorText),
+                    nameof(HasResult),
+                    nameof(IsWaiting),
+                    nameof(IsOutcomeUnresolved));
+
                 MeasurementCardCommand.RaiseCanExecuteChanged();
             }
         }
@@ -271,6 +391,9 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
     {
         OutcomeState.Pass => NetRow.Passed,
         OutcomeState.Fail => NetRow.Failed,
+        OutcomeState.Running => "TEST U TOKU",
+        OutcomeState.TimedOut => "NEMA REZULTATA",
+        OutcomeState.Error => "GREŠKA",
         _ => WaitingText
     };
 
@@ -278,10 +401,19 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
     {
         OutcomeState.Pass => "KABL JE ISPRAVAN",
         OutcomeState.Fail => "KABL NIJE ISPRAVAN",
+        OutcomeState.Running => "Čeka se rezultat sa testera.",
+        OutcomeState.TimedOut => "Rezultat nije stigao u zadatom vremenu. Kabl NIJE ispitan.",
+        OutcomeState.Error => OutcomeErrorText,
         _ => "Pokreni test na testeru."
     };
 
+    /// <summary>Zašto je Panel 3 u grešci; prazno kad greške nema.</summary>
+    public string OutcomeErrorText { get; private set; } = "Veza sa testerom je javila grešku.";
+
     public bool IsWaiting => Outcome == OutcomeState.Waiting;
+
+    /// <summary>Da li Panel 3 pokazuje nešto što nije ishod merenja (čekanje, istek, greška).</summary>
+    public bool IsOutcomeUnresolved => Outcome is OutcomeState.Running or OutcomeState.TimedOut or OutcomeState.Error;
 
     /// <summary>Da li je prikazan neki rezultat — od toga zavisi dugme „Merna karta".</summary>
     public bool HasResult => _currentRun is not null;
@@ -294,6 +426,25 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
 
     /// <summary>Greške poslednjeg rezultata, u obliku razumljivom operateru.</summary>
     public ObservableCollection<string> ResultDefects { get; } = new();
+
+    /// <summary>
+    /// Mreže koje nisu prošle, sa vrstom greške na svakoj.
+    /// </summary>
+    /// <remarks>
+    /// „PAO" sam po sebi operateru ne kaže šta da radi. Ovde stoji koja mreža nije prošla i šta
+    /// joj je — kratak spoj ili prekid, i između kojih tačaka.
+    /// </remarks>
+    public ObservableCollection<NetRow> FailedNetRows { get; } = new();
+
+    /// <summary>Da li ima mreža koje nisu prošle.</summary>
+    public bool HasFailedNets => FailedNetRows.Count > 0;
+
+    /// <summary>Kratak spisak mreža koje nisu prošle, npr. „Nisu prošle mreže: 3, 7".</summary>
+    public string FailedNetsSummary => FailedNetRows.Count == 0
+        ? string.Empty
+        : "Nisu prošle mreže: " + string.Join(
+            ", ",
+            FailedNetRows.Select(r => r.Ordinal.ToString(CultureInfo.InvariantCulture)));
 
     public RelayCommand MeasurementCardCommand { get; }
 
@@ -448,16 +599,37 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
         LoadVehicles();
         CheckPaths();
 
-        _gateway.TestRunReceived += OnTestRunReceived;
+        // Gateway okida događaje sa pozadinskih niti i ne zna da GUI postoji; ovde se hvata nit
+        // na kojoj se prikaz sme dirati, i na nju se svaki događaj prebacuje.
+        _ui = SynchronizationContext.Current;
+
+        _gateway.ResultReceived += OnResultReceived;
+        _gateway.StateChanged += OnStateChanged;
+        _gateway.GatewayError += OnGatewayError;
         _gateway.StartMonitoring();
 
         RefreshState();
     }
 
+    /// <summary>Izvršava posao na GUI niti, bez obzira na to sa koje niti je događaj stigao.</summary>
+    private void OnUiThread(Action work)
+    {
+        SynchronizationContext? ui = _ui;
+
+        if (ui is null || ReferenceEquals(SynchronizationContext.Current, ui))
+        {
+            // Testovi i konzola nemaju GUI nit; tada se radi odmah, pa je redosled očigledan.
+            work();
+            return;
+        }
+
+        ui.Post(_ => work(), null);
+    }
+
     /// <summary>Osvežava traku stanja. Prikaz zove periodično, jer se stanje menja i bez događaja.</summary>
     public void RefreshState()
     {
-        TesterGatewayState state = _gateway.State;
+        TesterGatewayState state = _gateway.Diagnostics;
 
         IsMonitoring = state.IsMonitoring;
         StatusText = state.IsMonitoring ? "Nadgledanje je aktivno." : "Nadgledanje nije pokrenuto.";
@@ -480,7 +652,14 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
         }
 
         _disposed = true;
-        _gateway.TestRunReceived -= OnTestRunReceived;
+
+        _waiting?.Cancel();
+        _waiting?.Dispose();
+        _waiting = null;
+
+        _gateway.ResultReceived -= OnResultReceived;
+        _gateway.StateChanged -= OnStateChanged;
+        _gateway.GatewayError -= OnGatewayError;
         _gateway.StopMonitoring();
     }
 
@@ -488,7 +667,38 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
     // Dolazak rezultata
     // -----------------------------------------------------------------------------------
 
-    private void OnTestRunReceived(object? sender, TestRunReceivedEventArgs e)
+    private void OnResultReceived(object? sender, TestRunReceivedEventArgs e) => OnUiThread(() => HandleResult(e));
+
+    private void OnStateChanged(object? sender, TesterStateChangedEventArgs e) => OnUiThread(() =>
+    {
+        TesterState = e.Current;
+        TesterStateText = DescribeTesterState(e.Current, e.Reason);
+    });
+
+    /// <summary>
+    /// Greška iz gateway-a: operater je vidi, a aplikacija nastavlja da radi.
+    /// </summary>
+    private void OnGatewayError(object? sender, GatewayErrorEventArgs e) => OnUiThread(() =>
+    {
+        ShowProblem(e.Message, !e.IsWarning);
+
+        if (!e.IsWarning && IsWaitingForResult)
+        {
+            ShowError(e.Message);
+        }
+    });
+
+    private static string DescribeTesterState(TesterState state, string reason) => state switch
+    {
+        Core.Gateway.TesterState.Idle => "Test nije pripremljen.",
+        Core.Gateway.TesterState.ProgramLoaded => "Test program je pripremljen.",
+        Core.Gateway.TesterState.WaitingForResult => "Čeka se rezultat.",
+        Core.Gateway.TesterState.Completed => "Rezultat je stigao.",
+        Core.Gateway.TesterState.Failed => string.IsNullOrWhiteSpace(reason) ? "Greška." : "Greška: " + reason,
+        _ => reason
+    };
+
+    private void HandleResult(TestRunReceivedEventArgs e)
     {
         // Prvo istorija, pa prikaz. I zatečeni i uživo rezultati idu u bazu bez razlike.
         TestRunImportResult imported = _importer.Import(e.Run);
@@ -504,6 +714,15 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
 
         ShowResult(imported.Run, imported.Cable);
         RunImported?.Invoke();
+
+        if (e.IsDuplicate)
+        {
+            // Gateway ne odbacuje duplikat, nego ga označava; operater mora da zna da je isti
+            // sadržaj već viđen u drugom fajlu.
+            ShowProblem(
+                $"Isti rezultat je već viđen u fajlu \"{e.DuplicateOfPath}\". Proveri da li je test zaista ponovljen.",
+                isError: false);
+        }
 
         if (imported.Run.Passed)
         {
@@ -532,16 +751,18 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
 
         ResultOperatorText = string.IsNullOrWhiteSpace(run.Operator) ? "—" : run.Operator;
 
+        // Greške se ispisuju jezikom crteža: terminal, boja žice, pa tačka testera u zagradi.
         ResultDefects.Clear();
-        foreach (TestDefect defect in run.Defects)
+        foreach (string defect in DefectTranslator.DescribeAll(run, cable))
         {
-            ResultDefects.Add(defect.Describe());
+            ResultDefects.Add(defect);
         }
 
         RaiseAll(nameof(ResultTimeText), nameof(ResultCableText), nameof(ResultOperatorText), nameof(HasResult));
 
         // Ishod se upisuje i uz netove izabranog kabla, ako je rezultat baš njegov.
         LoadNetRows();
+        LoadFailedNetRows();
 
         Outcome = run.Passed ? OutcomeState.Pass : OutcomeState.Fail;
         MeasurementCardCommand.RaiseCanExecuteChanged();
@@ -551,6 +772,15 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
     // Radnje
     // -----------------------------------------------------------------------------------
 
+    /// <summary>
+    /// Priprema test program i, kad aplikacija ne može sama da pokrene test, odmah počinje da
+    /// čeka rezultat.
+    /// </summary>
+    /// <remarks>
+    /// Kod rada preko fajlova START pritiska operater na mašini, pa se čekanje pokreće odmah po
+    /// pripremi — inače bi Panel 3 ćutao dok se ne desi nešto, a operater ne bi znao ni da li se
+    /// išta čeka ni dokle se čeka.
+    /// </remarks>
     private async Task PrepareTestAsync()
     {
         Cable? cable = SelectedCable;
@@ -562,15 +792,128 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
         PrepareError = null;
         PrepareMessage = null;
 
-        await _gateway.PrepareTestAsync(cable, CancellationToken.None).ConfigureAwait(true);
+        GatewayResult result = await _gateway.LoadProgramAsync(cable, CancellationToken.None).ConfigureAwait(true);
 
-        string? path = _gateway.State.LastPreparedSpecPath;
+        if (!result.IsOk)
+        {
+            PrepareError = result.Message;
+            ShowError(result.Message);
+            return;
+        }
+
+        string? path = _gateway.Diagnostics.LastPreparedSpecPath;
 
         PrepareMessage = IsDemoMode
             ? "Demo režim: .c61 fajl nije upisan na disk. " +
               "U stvarnom radu bi ovde stajala puna putanja upisanog fajla."
-            : $"Upisano: {path}\n" +
-              "U CableConnector-u izaberi ovaj spec, pritisni Download, pa pokreni test.";
+            : $"Upisano: {path}\n" + StartInstruction;
+
+        if (!CanShowStartButton)
+        {
+            // Test pokreće operater na mašini; od ovog trenutka se čeka rezultat.
+            Outcome = OutcomeState.Running;
+            await WaitForResultAsync().ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>Pokreće test kad gateway to ume, pa čeka rezultat.</summary>
+    private async Task StartTestAsync()
+    {
+        // Prikaz se pomera pre pokretanja: rezultat ume da stigne pre nego što se poziv vrati, a
+        // „test u toku" ne sme da prebriše ishod koji je već prikazan.
+        Outcome = OutcomeState.Running;
+
+        GatewayResult started = await _gateway.StartTestAsync(CancellationToken.None).ConfigureAwait(true);
+
+        if (!started.IsOk)
+        {
+            // NotSupported nije greška u programu nego granica implementacije — zato poruka, a
+            // ne izuzetak. Vidi ITesterGateway.StartTestAsync.
+            PrepareError = started.Message;
+            ShowError(started.Message);
+            return;
+        }
+
+        await WaitForResultAsync().ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// Čeka rezultat i vodi Panel 3 kroz čekanje, istek vremena i grešku.
+    /// </summary>
+    private async Task WaitForResultAsync()
+    {
+        CancelWait();
+
+        var cts = new CancellationTokenSource();
+        _waiting = cts;
+
+        // Ovde se prikaz namerno ne dira: „test u toku" postavlja onaj ko test pokreće, pre nego
+        // što rezultat uopšte može da stigne.
+        RaiseAll(nameof(IsWaitingForResult), nameof(CanStartTest));
+        CancelWaitCommand.RaiseCanExecuteChanged();
+        StartTestCommand.RaiseCanExecuteChanged();
+
+        try
+        {
+            GatewayResult result = await _gateway
+                .WaitForResultAsync(_settings.ResultTimeout, cts.Token)
+                .ConfigureAwait(true);
+
+            switch (result.Status)
+            {
+                case GatewayStatus.Ok:
+                    // Sam rezultat je već stigao kroz ResultReceived i tamo je i prikazan.
+                    break;
+
+                case GatewayStatus.Timeout:
+                    Outcome = OutcomeState.TimedOut;
+                    ShowProblem(result.Message, isError: true);
+                    break;
+
+                case GatewayStatus.Cancelled:
+                    // Operater je odustao od čekanja; ekran se vraća na početak, bez ishoda.
+                    if (Outcome == OutcomeState.Running)
+                    {
+                        Outcome = OutcomeState.Waiting;
+                    }
+
+                    break;
+
+                default:
+                    ShowError(result.Message);
+                    break;
+            }
+        }
+        finally
+        {
+            _waiting = null;
+            cts.Dispose();
+
+            RaiseAll(nameof(IsWaitingForResult), nameof(CanStartTest));
+            CancelWaitCommand.RaiseCanExecuteChanged();
+            StartTestCommand.RaiseCanExecuteChanged();
+        }
+    }
+
+    private void CancelWait()
+    {
+        CancellationTokenSource? waiting = _waiting;
+
+        if (waiting is null)
+        {
+            return;
+        }
+
+        // Prekida se samo čekanje u aplikaciji; mašina i dalje radi svoje.
+        waiting.Cancel();
+    }
+
+    /// <summary>Panel 3 prelazi u grešku, a poruka ide i u traku problema.</summary>
+    private void ShowError(string message)
+    {
+        OutcomeErrorText = message;
+        Outcome = OutcomeState.Error;
+        ShowProblem(message, isError: true);
     }
 
     private void ShowPrepareError(Exception ex)
@@ -635,36 +978,35 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
         _fake.ReceiveCsvLine(line);
     }
 
-    /// <summary>Greške za demo — prave oznake tačaka iz net liste izabranog kabla.</summary>
+    /// <summary>
+    /// Greške za demo — prave oznake tačaka iz <b>izvedene</b> net liste izabranog kabla.
+    /// </summary>
+    /// <remarks>
+    /// Greške moraju da liče na stvarne, inače demo ne vredi ništa: prekid je unutar jednog neta
+    /// (žica koja je pukla), a kratak spoj je između dva različita neta (dve žice koje se dodiruju).
+    /// Obrnuto — „kratak spoj" između dve tačke istog neta — tester nikad ne bi prijavio, jer te
+    /// tačke i treba da budu spojene.
+    /// </remarks>
     private static IReadOnlyList<string> BuildDemoDefects(Cable cable)
     {
-        var messages = new List<string>();
-
-        foreach (CableNet net in cable.Nets.OrderBy(n => n.Ordinal))
-        {
-            string[] points = net.Points.Split(
+        string[][] nets = cable.Nets
+            .OrderBy(n => n.Ordinal)
+            .Select(n => n.Points.Split(
                 Net.Separator,
-                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Where(p => p.Length >= 2)
+            .ToArray();
 
-            if (points.Length >= 2)
-            {
-                messages.Add($"SHORT {points[0]}-{points[1]}");
-            }
-
-            if (points.Length >= 4)
-            {
-                messages.Add($"OPEN {points[^2]}-{points[^1]}");
-            }
-
-            if (messages.Count > 0)
-            {
-                break;
-            }
+        if (nets.Length == 0)
+        {
+            return new[] { "SHORT O01-O02" };
         }
 
-        if (messages.Count == 0)
+        var messages = new List<string> { $"OPEN {nets[0][0]}-{nets[0][^1]}" };
+
+        if (nets.Length >= 2)
         {
-            messages.Add("SHORT O01-O02");
+            messages.Add($"SHORT {nets[0][0]}-{nets[1][0]}");
         }
 
         return messages;
@@ -742,6 +1084,19 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Iz tabele netova izdvaja one koji nisu prošli — to je ono što se gleda kod FAIL.</summary>
+    private void LoadFailedNetRows()
+    {
+        FailedNetRows.Clear();
+
+        foreach (NetRow row in NetRows.Where(r => r.IsFailed))
+        {
+            FailedNetRows.Add(row);
+        }
+
+        RaiseAll(nameof(HasFailedNets), nameof(FailedNetsSummary));
+    }
+
     private void LoadNets()
     {
         Nets.Clear();
@@ -754,6 +1109,21 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
         foreach (CableNet net in SelectedCable.Nets.OrderBy(n => n.Ordinal))
         {
             Nets.Add($"{net.Ordinal.ToString(CultureInfo.InvariantCulture)}. {net.Points}");
+        }
+    }
+
+    private void LoadWires()
+    {
+        Wires.Clear();
+
+        if (SelectedCable is null)
+        {
+            return;
+        }
+
+        foreach (CableWire wire in SelectedCable.Wires.OrderBy(w => w.WireNo))
+        {
+            Wires.Add(wire);
         }
     }
 

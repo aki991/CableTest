@@ -9,13 +9,15 @@ public sealed class TestRunReceivedEventArgs : EventArgs
         TestRun run,
         string? sourcePath = null,
         IReadOnlyList<string>? warnings = null,
-        bool isBackfill = false)
+        bool isBackfill = false,
+        string? duplicateOfPath = null)
     {
         ArgumentNullException.ThrowIfNull(run);
         Run = run;
         SourcePath = sourcePath;
         Warnings = warnings ?? Array.Empty<string>();
         IsBackfill = isBackfill;
+        DuplicateOfPath = duplicateOfPath;
         ReceivedAt = DateTime.Now;
     }
 
@@ -58,6 +60,25 @@ public sealed class TestRunReceivedEventArgs : EventArgs
     /// čitanje, ne na pojedinačan red.
     /// </summary>
     public IReadOnlyList<string> Warnings { get; }
+
+    /// <summary>
+    /// Putanja fajla u kome je isti sadržaj već viđen, ili <c>null</c> ako rezultat nije duplikat.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Isti sadržaj (isti SHA-256 sirovog reda) u <b>istom</b> fajlu je ponovljeno čitanje i do
+    /// ovde uopšte ne stiže — gateway ga ćutke preskače. Isti sadržaj u <b>drugom</b> fajlu je
+    /// nešto drugo: može biti kopija jučerašnjeg fajla, a može biti i stvarno ponovljen test.
+    /// </para>
+    /// <para>
+    /// Gateway o tome ne odlučuje, nego prijavljuje: rezultat stiže normalno, sa ovom oznakom, a
+    /// šta će s njim biti odlučuje sloj iznad — uvoz u bazu koji ionako ima jedinstven indeks.
+    /// </para>
+    /// </remarks>
+    public string? DuplicateOfPath { get; }
+
+    /// <summary>Da li je isti sadržaj već viđen u nekom drugom fajlu.</summary>
+    public bool IsDuplicate => DuplicateOfPath is not null;
 
     /// <summary>Vreme kada je aplikacija primila rezultat (ne vreme testa).</summary>
     public DateTime ReceivedAt { get; }

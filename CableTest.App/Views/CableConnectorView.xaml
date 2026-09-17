@@ -1,0 +1,591 @@
+<UserControl x:Class="CableTest.App.Views.CableConnectorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:CableTest.App.ViewModels"
+             mc:Ignorable="d"
+             d:DesignHeight="800" d:DesignWidth="1200">
+
+    <!-- F8 i dok je CableTest u prvom planu; prečica na nivou Windows-a se prijavljuje u kodu. -->
+    <UserControl.InputBindings>
+        <KeyBinding Key="F8" Command="{Binding CaptureElementCommand}" />
+    </UserControl.InputBindings>
+
+    <!--
+        Razvojni alat, ne ekran za pogon. Služi da se vidi šta je od Microtest CableConnector-a
+        dohvatljivo preko Windows UI Automation: koji se prozori nalaze, kako izgleda njihovo
+        drvo kontrola i koja se dugmad mogu pozvati, pa da se to zapiše i izveze u JSON.
+
+        Zato se ovaj ekran podrazumevano ne vidi u bočnom meniju — uključuje se u Podešavanjima.
+    -->
+
+    <UserControl.Resources>
+        <Style x:Key="OdeljakStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource IvicaBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+        </Style>
+
+        <Style x:Key="OdeljakZaglavljeStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Panel3Brush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource IvicaBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="CornerRadius" Value="12,12,0,0" />
+            <Setter Property="Padding" Value="16,11" />
+        </Style>
+
+        <Style x:Key="NazivStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{StaticResource Tekst2Brush}" />
+            <Setter Property="Margin" Value="0,0,12,4" />
+        </Style>
+
+        <Style x:Key="VrednostStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+        <!--
+            Log je TextBox da bi se tekst mogao označiti i prekopirati. Podrazumevani izgled polja
+            za unos centrira sadržaj po visini i računa na jedan red, pa mu ovde treba svoj okvir.
+        -->
+        <Style x:Key="LogPoljeStyle" TargetType="TextBox">
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+            <Setter Property="CaretBrush" Value="{StaticResource TekstBrush}" />
+            <Setter Property="SelectionBrush" Value="{StaticResource AkcenatBrush}" />
+            <Setter Property="Background" Value="{StaticResource Panel2Brush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="IsReadOnlyCaretVisible" Value="True" />
+            <Setter Property="AcceptsReturn" Value="True" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="0,0,12,12">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Jedna kontrola u desnom panelu: dugme/meni/kartica, ili polje sa čitanjem i upisom. -->
+        <DataTemplate x:Key="KontrolaTemplate" DataType="{x:Type vm:UiaActionViewModel}">
+            <Border BorderBrush="#26FFFFFF" BorderThickness="0,0,0,1" Padding="0,7">
+                <StackPanel>
+                    <Grid>
+                        <!-- Dugme, stavka menija ili kartica -->
+                        <Grid x:Name="Akcija">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                                <TextBlock Text="{Binding Name}" FontSize="13.5" FontFamily="Consolas"
+                                           Foreground="{StaticResource TekstBrush}" TextWrapping="Wrap" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="⚠ traži potvrdu" FontSize="11.5"
+                                               Foreground="{StaticResource WarningBrush}" Margin="0,2,10,0"
+                                               Visibility="{Binding NeedsConfirmation, Converter={StaticResource BoolToVisibility}}" />
+                                    <TextBlock Text="{Binding Status}" FontSize="11.5"
+                                               Foreground="{StaticResource Tekst3Brush}" Margin="0,2,0,0"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Button Grid.Column="1" Content="Pokreni"
+                                    Style="{StaticResource SmallButtonStyle}"
+                                    Command="{Binding RunCommand}"
+                                    VerticalAlignment="Center" Margin="0" />
+                        </Grid>
+
+                        <!-- Polje: ista kontrola se i čita i upisuje -->
+                        <Grid x:Name="Polje" Visibility="Collapsed">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
+                                <TextBlock Text="{Binding Name}" FontSize="13.5" FontFamily="Consolas"
+                                           Foreground="{StaticResource TekstBrush}" />
+                                <TextBlock Text="{Binding Status}" FontSize="11.5"
+                                           Foreground="{StaticResource Tekst3Brush}" Margin="0,2,0,0"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+
+                            <TextBox Grid.Column="1" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                     FontSize="13" Padding="8,6" VerticalAlignment="Center" Margin="0,0,8,0" />
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="Pročitaj" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding ReadCommand}" Margin="0,0,6,0" Padding="12,7" />
+                                <Button Content="Upiši" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding WriteCommand}" Margin="0" Padding="12,7" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+
+                    <!--
+                        Ishod prolaza „Otkrij sve“: šta je o kontroli otkriveno, ili — kad nije
+                        pronađena — koja su imena u prozoru najbliža traženom.
+                    -->
+                    <StackPanel Margin="0,6,0,2"
+                                Visibility="{Binding HasDiscovery, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding DiscoveryHeader}" FontSize="11.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource Tekst2Brush}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding DiscoveryDetails}" FontSize="11.5" FontFamily="Consolas"
+                                   Foreground="{StaticResource Tekst3Brush}" TextWrapping="Wrap"
+                                   Visibility="{Binding DiscoveryFound, Converter={StaticResource BoolToVisibility}}" />
+                        <TextBlock Text="{Binding DiscoveryNearest}" FontSize="11.5"
+                                   Foreground="{StaticResource Tekst3Brush}" TextWrapping="Wrap"
+                                   Visibility="{Binding HasNearest, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsField}" Value="True">
+                    <Setter TargetName="Akcija" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="Polje" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!--
+            Jedan čvor UIA drveta. Prikazuju se samo deca koja pretraga propusti (VisibleChildren),
+            a poklapanje se istakne okvirom — u režimu „istakni“ celo drvo ostaje na ekranu, pa se
+            bez toga ne bi videlo šta je pogođeno.
+        -->
+        <HierarchicalDataTemplate x:Key="CvorTemplate"
+                                  DataType="{x:Type vm:UiaNodeViewModel}"
+                                  ItemsSource="{Binding VisibleChildren}">
+            <!-- Okvir je uvek tu, samo providan: da se red ne pomeri kad poklapanje dobije ivicu. -->
+            <Border x:Name="Poklapanje" Background="Transparent" BorderThickness="1"
+                    BorderBrush="Transparent"
+                    CornerRadius="6" Padding="6,3" Margin="0,0,0,1">
+                <!--
+                    Desni klik nad čvorom: kopiranje podataka o njemu, ili cele grane. Meni je
+                    sistemski, bez svoje teme — takav je čitljiv i kad se tema Windows-a promeni.
+                -->
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Kopiraj podatke o čvoru" Command="{Binding CopyNodeCommand}" />
+                        <MenuItem Header="Kopiraj granu" Command="{Binding CopyBranchCommand}" />
+                    </ContextMenu>
+                </Border.ContextMenu>
+
+                <StackPanel>
+                    <TextBlock Text="{Binding Header}" FontSize="13.5" FontWeight="SemiBold"
+                               Foreground="{StaticResource TekstBrush}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Details}" FontSize="11.5" FontFamily="Consolas"
+                               Foreground="{StaticResource Tekst2Brush}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding PatternsText}" FontSize="11.5"
+                               Foreground="{StaticResource Tekst3Brush}" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </Border>
+            <HierarchicalDataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsMatch}" Value="True">
+                    <Setter TargetName="Poklapanje" Property="Background" Value="#1FFFFFFF" />
+                    <Setter TargetName="Poklapanje" Property="BorderBrush" Value="{StaticResource AkcenatBrush}" />
+                </DataTrigger>
+            </HierarchicalDataTemplate.Triggers>
+        </HierarchicalDataTemplate>
+    </UserControl.Resources>
+
+    <Grid Margin="24,20,24,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <!-- naslov i gornja traka -->
+            <RowDefinition Height="*" />
+            <!-- drvo i stalna dugmad -->
+            <RowDefinition Height="Auto" />
+            <!-- log -->
+        </Grid.RowDefinitions>
+
+        <!-- ============================================================================
+             GORNJA TRAKA
+             ============================================================================ -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="CableConnector" Style="{StaticResource NaslovStraneStyle}" />
+            <TextBlock Style="{StaticResource OpisStraneStyle}" Margin="0,0,0,14"
+                       Text="Razvojni alat: ispituje šta je od Microtest CableConnector-a dohvatljivo preko Windows UI Automation. Ne otvara COM port i ne razgovara sa testerom." />
+
+            <Border Style="{StaticResource OdeljakStyle}" Margin="0,0,0,14">
+                <StackPanel>
+                    <Border Style="{StaticResource OdeljakZaglavljeStyle}">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <Button Content="Poveži" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding ConnectCommand}" />
+                                <Button Content="Osveži" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding RefreshCommand}" />
+                                <Button Content="Otkrij sve" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding DiscoverAllCommand}"
+                                        ToolTip="Traži sve poznate kontrole, jednu po jednu. Samo čitanje: nijedna se ne poziva." />
+                                <Button Content="Uhvati element (F8)" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding CaptureElementCommand}"
+                                        ToolTip="Čita element ispod pokazivača miša i ceo lanac njegovih roditelja. Samo čitanje; radi i kad je „Samo čitanje“ uključeno." />
+                                <Button Content="Izvezi mapu" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding ExportMapCommand}"
+                                        ToolTip="Omogućeno tek posle uspešnog prolaza dugmeta „Otkrij sve“." />
+                            </StackPanel>
+                            <TextBlock Text="Prozori CableConnector-a" Style="{StaticResource OdeljakNaslovStyle}"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
+
+                    <Grid Margin="16,14,16,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Glavni prozor -->
+                        <Border Grid.Column="0" Background="{StaticResource Panel2Brush}"
+                                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1"
+                                CornerRadius="10" Padding="14,12" Margin="0,0,8,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Glavni prozor"
+                                           FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{StaticResource BelaBrush}" Margin="0,0,0,8" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Stanje:" Style="{StaticResource NazivStyle}" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding MainStatusText}"
+                                           Style="{StaticResource VrednostStyle}" FontWeight="SemiBold" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="PID:" Style="{StaticResource NazivStyle}" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MainPidText}"
+                                           Style="{StaticResource VrednostStyle}" />
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Naslov:" Style="{StaticResource NazivStyle}" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding MainTitleText}"
+                                           ToolTip="{Binding MainTitleText}" Style="{StaticResource VrednostStyle}" />
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="ClassName:" Style="{StaticResource NazivStyle}" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding MainClassText}"
+                                           ToolTip="{Binding MainClassText}" Style="{StaticResource VrednostStyle}" />
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="FrameworkId:" Style="{StaticResource NazivStyle}" />
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding MainFrameworkText}"
+                                           ToolTip="{Binding MainFrameworkText}" Style="{StaticResource VrednostStyle}" />
+
+                                <TextBlock Grid.Row="6" Grid.ColumnSpan="2" Text="{Binding MainNote}"
+                                           FontSize="11.5" Foreground="{StaticResource Tekst3Brush}"
+                                           TextWrapping="Wrap" Margin="0,4,0,0" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Prozor Edit -->
+                        <Border Grid.Column="1" Background="{StaticResource Panel2Brush}"
+                                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1"
+                                CornerRadius="10" Padding="14,12" Margin="8,0,0,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Prozor „Edit“"
+                                           FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{StaticResource BelaBrush}" Margin="0,0,0,8" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Stanje:" Style="{StaticResource NazivStyle}" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding EditStatusText}"
+                                           Style="{StaticResource VrednostStyle}" FontWeight="SemiBold" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="PID:" Style="{StaticResource NazivStyle}" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding EditPidText}"
+                                           Style="{StaticResource VrednostStyle}" />
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Naslov:" Style="{StaticResource NazivStyle}" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding EditTitleText}"
+                                           ToolTip="{Binding EditTitleText}" Style="{StaticResource VrednostStyle}" />
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="ClassName:" Style="{StaticResource NazivStyle}" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding EditClassText}"
+                                           ToolTip="{Binding EditClassText}" Style="{StaticResource VrednostStyle}" />
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="FrameworkId:" Style="{StaticResource NazivStyle}" />
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding EditFrameworkText}"
+                                           ToolTip="{Binding EditFrameworkText}" Style="{StaticResource VrednostStyle}" />
+
+                                <TextBlock Grid.Row="6" Grid.ColumnSpan="2" Text="{Binding EditNote}"
+                                           FontSize="11.5" Foreground="{StaticResource Tekst3Brush}"
+                                           TextWrapping="Wrap" Margin="0,4,0,0" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- Verzija i prekidači bezbednosti -->
+                    <Border BorderBrush="{StaticResource IvicaBrush}" BorderThickness="0,1,0,0" Padding="16,12">
+                        <WrapPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
+                                <TextBlock Text="Verzija:" Style="{StaticResource StatusLabelStyle}" Margin="0,0,8,0" />
+                                <TextBlock Text="{Binding VersionText}" Style="{StaticResource StatusValueStyle}"
+                                           FontFamily="Consolas" />
+                            </StackPanel>
+
+                            <!-- Znak upozorenja kad verzija nije ona na kojoj je strana rađena. -->
+                            <Border Background="{StaticResource WarningBackBrush}"
+                                    BorderBrush="{StaticResource WarningBorderBrush}"
+                                    BorderThickness="1" CornerRadius="999" Padding="12,5"
+                                    VerticalAlignment="Center" Margin="0,0,20,0">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding VersionIsExpected}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding VersionWarningText}" FontSize="12.5" FontWeight="SemiBold"
+                                           Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" />
+                            </Border>
+
+                            <CheckBox Content="Samo čitanje" IsChecked="{Binding ReadOnlyMode}"
+                                      VerticalAlignment="Center" Margin="0,0,20,0"
+                                      ToolTip="Dok je uključeno, radi se samo obilazak drveta i čitanje vrednosti." />
+
+                            <CheckBox Content="Dozvoli fizički klik" IsChecked="{Binding AllowPhysicalClick}"
+                                      VerticalAlignment="Center" Margin="0,0,20,0"
+                                      ToolTip="Poslednja mogućnost: klik mišem, kad ni Invoke ni LegacyIAccessible ne prođu." />
+
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
+                                <TextBlock Text="Dubina:" Style="{StaticResource StatusLabelStyle}" Margin="0,0,8,0" />
+                                <TextBox Text="{Binding MaxDepth}" Width="56" Padding="8,5"
+                                         IsEnabled="{Binding DepthIsLimited}"
+                                         ToolTip="Najviše 20; veći broj se svodi na 20." />
+                                <CheckBox Content="bez ograničenja" IsChecked="{Binding UnlimitedDepth}"
+                                          VerticalAlignment="Center" Margin="12,0,0,0"
+                                          ToolTip="Obilazi drvo do kraja. Svaki čvor je poziv u tuđi proces, pa obilazak može da potraje." />
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Rok (s):" Style="{StaticResource StatusLabelStyle}" Margin="0,0,8,0" />
+                                <TextBox Text="{Binding TimeoutSeconds}" Width="56" Padding="8,5" />
+                            </StackPanel>
+                        </WrapPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <!-- ============================================================================
+             SREDINA: levo drvo, desno stalna dugmad
+             ============================================================================ -->
+        <Grid Grid.Row="1" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="430" />
+            </Grid.ColumnDefinitions>
+
+            <!-- ================= DRVO ================= -->
+            <Border Grid.Column="0" Style="{StaticResource OdeljakStyle}" Margin="0,0,14,0">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Style="{StaticResource OdeljakZaglavljeStyle}">
+                        <DockPanel>
+                            <ComboBox DockPanel.Dock="Right" Width="130" MinHeight="34" Padding="10,6"
+                                      ItemsSource="{Binding Windows}"
+                                      SelectedItem="{Binding SelectedWindow}" />
+                            <ComboBox DockPanel.Dock="Right" Width="120" MinHeight="34" Padding="10,6"
+                                      Margin="0,0,8,0"
+                                      ItemsSource="{Binding Views}"
+                                      SelectedItem="{Binding SelectedView}"
+                                      ToolTip="Raw prikazuje sve slojeve, uključujući WPF Grid, Border i Panel. Control i Content ih sakrivaju." />
+                            <TextBlock DockPanel.Dock="Right" Text="Pogled:" Style="{StaticResource StatusLabelStyle}"
+                                       VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="Drvo elemenata" Style="{StaticResource OdeljakNaslovStyle}"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
+
+                    <!--
+                        PRETRAGA U DRVETU
+                        Radi nad već obiđenim drvetom: nijedno filtriranje ne dira UIA, pa je i
+                        kucanje u polju odmah vidljivo.
+                    -->
+                    <Border DockPanel.Dock="Top" BorderBrush="{StaticResource IvicaBrush}"
+                            BorderThickness="0,0,0,1" Padding="16,12">
+                        <StackPanel>
+                            <WrapPanel>
+                                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                         Tag="traži po Name, AutomationId, ControlType, ClassName, FrameworkId…"
+                                         Width="330" FontSize="13.5" Padding="10,7"
+                                         VerticalAlignment="Center" Margin="0,0,10,6" />
+
+                                <ComboBox ItemsSource="{Binding ControlTypes}"
+                                          SelectedItem="{Binding SelectedControlType}"
+                                          Width="150" MinHeight="34" FontSize="13.5" Padding="10,6"
+                                          VerticalAlignment="Center" Margin="0,0,10,6"
+                                          ToolTip="Tipovi koji u ovom drvetu zaista postoje." />
+
+                                <ComboBox ItemsSource="{Binding FilterModes}"
+                                          SelectedItem="{Binding SelectedFilterMode}"
+                                          Width="170" MinHeight="34" FontSize="13.5" Padding="10,6"
+                                          VerticalAlignment="Center" Margin="0,0,10,6"
+                                          ToolTip="„istakni“ prikazuje celo drvo; „samo poklapanja“ krije sve osim pogodaka i čvorova iznad njih." />
+
+                                <Button Content="Razvij sve" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding ExpandAllCommand}" />
+                                <Button Content="Skupi sve" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding CollapseAllCommand}" />
+                            </WrapPanel>
+
+                            <TextBlock Text="{Binding TreeCountText}" Style="{StaticResource StatusLabelStyle}"
+                                       Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Radnje nad izabranim čvorom -->
+                    <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource IvicaBrush}"
+                            BorderThickness="0,1,0,0" Padding="16,12">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource StatusLabelStyle}" Margin="0,0,0,8"
+                                       Text="Izaberite čvor u drvetu da biste radili sa njim." />
+                            <WrapPanel>
+                                <Button Content="Invoke" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding InvokeNodeCommand}" />
+                                <Button Content="Fizički klik" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding PhysicalClickNodeCommand}" />
+                                <Button Content="Pročitaj vrednost" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding ReadNodeValueCommand}" />
+                                <Button Content="Upiši vrednost" Style="{StaticResource SmallButtonStyle}"
+                                        Command="{Binding WriteNodeValueCommand}" />
+                                <TextBox Text="{Binding NodeValue, UpdateSourceTrigger=PropertyChanged}"
+                                         Tag="vrednost za upis…" Width="200" Padding="10,7"
+                                         VerticalAlignment="Center" Margin="8,4,0,4" />
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!--
+                        LANAC RODITELJA
+                        Za izabrani čvor, odnosno za element uhvaćen tasterom F8: od prozora
+                        nadole, sa istim podacima na svakom nivou.
+                    -->
+                    <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource IvicaBrush}"
+                            BorderThickness="0,1,0,0" Padding="16,12"
+                            Visibility="{Binding HasChain, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding ChainTitle}" Style="{StaticResource StatusLabelStyle}"
+                                       Margin="0,0,0,8" TextTrimming="CharacterEllipsis" />
+
+                            <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding Chain}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:UiaChainItemViewModel}">
+                                            <StackPanel Margin="0,0,0,4">
+                                                <TextBlock Text="{Binding Header}" FontSize="12.5"
+                                                           FontFamily="Consolas" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TekstBrush}" />
+                                                <TextBlock Text="{Binding Details}" FontSize="11.5"
+                                                           FontFamily="Consolas"
+                                                           Foreground="{StaticResource Tekst3Brush}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </Border>
+
+                    <TreeView x:Name="Drvo"
+                              Style="{StaticResource DrvoStyle}"
+                              ItemsSource="{Binding TreeNodes}"
+                              ItemTemplate="{StaticResource CvorTemplate}"
+                              SelectedItemChanged="OnCvorIzabran"
+                              TreeViewItem.Selected="OnRedIzabran"
+                              Margin="10,10,6,10" />
+                </DockPanel>
+            </Border>
+
+            <!-- ================= STALNA DUGMAD ================= -->
+            <Border Grid.Column="1" Style="{StaticResource OdeljakStyle}">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Style="{StaticResource OdeljakZaglavljeStyle}">
+                        <TextBlock Text="Poznate kontrole" Style="{StaticResource OdeljakNaslovStyle}" />
+                    </Border>
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16,12,10,12">
+                        <ItemsControl ItemsSource="{Binding ActionGroups}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,0,0,16">
+                                        <TextBlock Text="{Binding Title}" Style="{StaticResource SectionTitleStyle}" />
+                                        <ItemsControl ItemsSource="{Binding Actions}"
+                                                      ItemTemplate="{StaticResource KontrolaTemplate}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
+
+        <!-- ============================================================================
+             LOG
+             ============================================================================ -->
+        <Border Grid.Row="2" Style="{StaticResource OdeljakStyle}">
+            <DockPanel>
+                <Border DockPanel.Dock="Top" Style="{StaticResource OdeljakZaglavljeStyle}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Content="Kopiraj" Style="{StaticResource SmallButtonStyle}"
+                                    Command="{Binding CopyLogCommand}" />
+                            <Button Content="Obriši" Style="{StaticResource SmallButtonStyle}"
+                                    Command="{Binding ClearLogCommand}" />
+                        </StackPanel>
+                        <TextBlock Text="Log" Style="{StaticResource OdeljakNaslovStyle}" VerticalAlignment="Center" />
+                    </DockPanel>
+                </Border>
+
+                <!-- TextBox, a ne TextBlock: tekst mora da se može označiti i prekopirati. -->
+                <TextBox x:Name="LogPolje"
+                         Style="{StaticResource LogPoljeStyle}"
+                         Text="{Binding LogText, Mode=OneWay}"
+                         TextChanged="OnLogPromenjen"
+                         Height="200" />
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

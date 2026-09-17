@@ -94,6 +94,8 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Operater:"
@@ -120,7 +122,51 @@
                                    Style="{StaticResource PodatakNazivStyle}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Testing.ProcessedText}"
                                    Style="{StaticResource PodatakVrednostStyle}" />
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Izvor rezultata:"
+                                   Style="{StaticResource PodatakNazivStyle}" />
+                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ResultSourceText}"
+                                   Style="{StaticResource PodatakVrednostStyle}" />
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Čekanje na rezultat:"
+                                   Style="{StaticResource PodatakNazivStyle}" />
+                        <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding ResultTimeoutText}"
+                                   Style="{StaticResource PodatakVrednostStyle}" />
                     </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ================= RAZVOJ ================= -->
+            <Border Style="{StaticResource OdeljakStyle}" Margin="0,18,0,0">
+                <StackPanel>
+                    <Border Background="{StaticResource Panel3Brush}"
+                            BorderBrush="{StaticResource IvicaBrush}" BorderThickness="0,0,0,1"
+                            CornerRadius="12,12,0,0" Padding="20,13">
+                        <TextBlock Text="Razvoj" Style="{StaticResource OdeljakNaslovStyle}" />
+                    </Border>
+
+                    <StackPanel Margin="20,16,20,18">
+                        <CheckBox Content="Prikaži CableConnector alat (razvoj)"
+                                  IsChecked="{Binding ShowCableConnector}" />
+                        <TextBlock Style="{StaticResource OpisStraneStyle}" Margin="29,7,0,0"
+                                   Text="Dodaje na dno bočnog menija stranu za ispitivanje Microtest CableConnector-a preko Windows UI Automation. Namenjena je razvoju, ne radu u pogonu; prekidač važi odmah i pamti se." />
+                        <!--
+                            Izbor izvora rezultata se vidi samo uz uključen razvojni prekidač.
+                            Simulacija ne sme da se nađe pred operaterom slučajno.
+                        -->
+                        <StackPanel Margin="0,16,0,0"
+                                    Visibility="{Binding ShowResultSourceChoice, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="Izvor rezultata" Style="{StaticResource SectionTitleStyle}" />
+                            <ComboBox ItemsSource="{Binding ResultSources}" SelectedItem="{Binding ResultSource}"
+                                      Width="260" HorizontalAlignment="Left" Margin="0,8,0,0" />
+                            <TextBlock Style="{StaticResource OpisStraneStyle}" Margin="0,7,0,0"
+                                       Text="„File“ čita CSV koji piše CableConnector — to je jedini izvor za rad u pogonu. „Simulation“ čita pripremljene fajlove i služi razvoju; važi od sledećeg pokretanja." />
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding SettingsError}" TextWrapping="Wrap" Margin="29,9,0,0"
+                                   FontSize="13.5" Foreground="{StaticResource ErrorBrush}"
+                                   Visibility="{Binding HasSettingsError, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </StackPanel>

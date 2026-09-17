@@ -41,18 +41,21 @@ public sealed class DatabaseTests : IDisposable
         }
     }
 
-    /// <summary>Koliko vozila donosi početni sadržaj baze (migracija 003).</summary>
-    private const int KatalogVozila = 3;
+    /// <summary>Koliko kablova ima katalog posle migracije 004 — dvanaest sa crteža =40.</summary>
+    private const int KatalogKablova = 12;
 
-    /// <summary>Koliko kablova donosi početni sadržaj baze: 20 + 20 + 21.</summary>
-    private const int KatalogKablova = 61;
+    /// <summary>Kabl na kome se u ovim testovima proverava rad sa katalogom.</summary>
+    private const string OgledniKabl = "40W1-1";
 
     /// <summary>Ukupan broj netova u bazi.</summary>
-    private long BrojNetova()
+    private long BrojNetova() => BrojRedova("Net");
+
+    /// <summary>Broj redova u zadatoj tabeli.</summary>
+    private long BrojRedova(string tabela)
     {
         using SqliteConnection connection = _database.OpenConnection();
         using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(*) FROM Net;";
+        command.CommandText = $"SELECT COUNT(*) FROM {tabela};";
         return (long)command.ExecuteScalar()!;
     }
 
@@ -85,8 +88,8 @@ public sealed class DatabaseTests : IDisposable
 
         Assert.Equal(prvi, _database.SchemaVersion());
 
-        // Početni sadržaj se ne ponavlja.
-        Assert.Equal(KatalogVozila, new SqliteVehicleRepository(_database).GetAll().Count);
+        // Početni sadržaj se ne ponavlja: vozilo ostaje jedno.
+        Assert.Single(new SqliteVehicleRepository(_database).GetAll());
     }
 
     [Fact]
@@ -111,34 +114,33 @@ public sealed class DatabaseTests : IDisposable
         CableTestDatabase druga = CableTestDatabase.OpenAndMigrate(path);
 
         Assert.Equal(verzija, druga.SchemaVersion());
-        Assert.Equal(KatalogVozila, new SqliteVehicleRepository(druga).GetAll().Count);
+        Assert.Single(new SqliteVehicleRepository(druga).GetAll());
     }
 
     // -------------------------------------------------------------------------------------
     // Početni sadržaj
     // -------------------------------------------------------------------------------------
 
+    /// <summary>
+    /// Nova baza ima samo ono što je stvarno: vozilo „Miloš Veliki“ i dvanaest kablova sa crteža
+    /// 40_grupa_2_0.pdf. Ogledni katalog iz ranijih migracija je zamenjen.
+    /// </summary>
     [Fact]
-    public void Katalog_PriPrvomPokretanju_DajeTriVozilaSaKablovima()
+    public void Katalog_PriPrvomPokretanju_DajeVoziloSaKablovimaSaCrteza()
     {
-        IReadOnlyList<Vehicle> vozila = new SqliteVehicleRepository(_database).GetAll();
-
-        Assert.Equal(
-            new[] { "Miloš Veliki", "Lazar 3M", "Perun" },
-            vozila.Select(v => v.Name));
+        Vehicle vozilo = Assert.Single(new SqliteVehicleRepository(_database).GetAll());
+        Assert.Equal("Miloš Veliki", vozilo.Name);
 
         var kablovi = new SqliteCableRepository(_database);
 
-        // Oznake unutar vozila idu prirodnim redom: W1 pre W2, a ne W1, W10, W11, W2.
-        string[] milos = kablovi.GetByVehicle(vozila[0].Id).Select(c => c.Code).ToArray();
-        Assert.Equal(20, milos.Length);
-        Assert.Equal("M30-W1", milos[0]);
-        Assert.Equal("M30-W2", milos[1]);
-        Assert.Equal("M30-W20", milos[^1]);
+        // Spisak prati crtež: prva strana je W1.1, poslednja (dvanaesta) je W5.
+        string[] milos = kablovi.GetByVehicle(vozilo.Id).Select(c => c.Code).ToArray();
 
-        Assert.Equal(20, kablovi.GetByVehicle(vozila[1].Id).Count);
-        Assert.Equal(21, kablovi.GetByVehicle(vozila[2].Id).Count);
-
+        Assert.Equal(KatalogKablova, milos.Length);
+        Assert.Equal("40-W1.1", milos[0]);
+        Assert.Equal("40-W1.2", milos[1]);
+        Assert.Equal("40-W2", milos[6]);
+        Assert.Equal("40-W5", milos[^1]);
         Assert.Equal(KatalogKablova, kablovi.GetAll().Count);
     }
 
@@ -170,9 +172,9 @@ public sealed class DatabaseTests : IDisposable
     {
         var repository = new SqliteCableRepository(_database);
 
-        Assert.NotNull(repository.GetBySpecFileName("M30-W1"));
-        Assert.NotNull(repository.GetBySpecFileName("m30-w1"));
-        Assert.NotNull(repository.GetBySpecFileName("M30-W1.c61"));
+        Assert.NotNull(repository.GetBySpecFileName(OgledniKabl));
+        Assert.NotNull(repository.GetBySpecFileName("40w1-1"));
+        Assert.NotNull(repository.GetBySpecFileName("40W1-1.c61"));
         Assert.Null(repository.GetBySpecFileName("NEMA-GA"));
         Assert.Null(repository.GetBySpecFileName(null));
     }
@@ -211,16 +213,19 @@ public sealed class DatabaseTests : IDisposable
         Vehicle? vozilo = vehicles.GetByName("Miloš Veliki");
         Assert.NotNull(vozilo);
 
-        long netovaPre = BrojNetova();
-        int njegovihNetova = cables.GetByVehicle(vozilo!.Id).Sum(c => c.Nets.Count);
+        Assert.True(BrojRedova("CableTerminal") > 0);
+        Assert.True(BrojRedova("CableWire") > 0);
 
-        vehicles.Delete(vozilo.Id);
+        vehicles.Delete(vozilo!.Id);
 
         Assert.Empty(cables.GetByVehicle(vozilo.Id));
-        Assert.Null(cables.GetBySpecFileName("M30-W1"));
+        Assert.Null(cables.GetBySpecFileName(OgledniKabl));
 
-        // Netovi obrisanih kablova odlaze sa njima, a tuđi ostaju netaknuti.
-        Assert.Equal(netovaPre - njegovihNetova, BrojNetova());
+        // Ožičenje obrisanih kablova odlazi sa njima — inače bi u bazi ostali terminali i
+        // provodnici bez kabla.
+        Assert.Equal(0, BrojNetova());
+        Assert.Equal(0, BrojRedova("CableTerminal"));
+        Assert.Equal(0, BrojRedova("CableWire"));
     }
 
     [Fact]
@@ -262,7 +267,7 @@ public sealed class DatabaseTests : IDisposable
 
         // Ime se upisuje velikim slovima (mala odbija SpecFileNameValidator), pa se ovde
         // proverava sam jedinstveni indeks.
-        var duplikat = new Cable { VehicleId = vehicleId, Code = "DRUGI", SpecFileName = "M30-W1" };
+        var duplikat = new Cable { VehicleId = vehicleId, Code = "DRUGI", SpecFileName = OgledniKabl };
 
         Assert.Throws<SqliteException>(() => cables.Add(duplikat));
     }
@@ -295,7 +300,7 @@ public sealed class DatabaseTests : IDisposable
     public void TestRun_SeUpisujeSaGreskamaICitaNazad()
     {
         var runs = new SqliteTestRunRepository(_database);
-        long cableId = new SqliteCableRepository(_database).GetBySpecFileName("M30-W1")!.Id;
+        long cableId = new SqliteCableRepository(_database).GetBySpecFileName(OgledniKabl)!.Id;
 
         var run = new TestRun
         {
@@ -430,7 +435,7 @@ public sealed class DatabaseTests : IDisposable
     public void GetByCable_VracaNajnovijePrve()
     {
         var runs = new SqliteTestRunRepository(_database);
-        long cableId = new SqliteCableRepository(_database).GetBySpecFileName("M30-W1")!.Id;
+        long cableId = new SqliteCableRepository(_database).GetBySpecFileName(OgledniKabl)!.Id;
 
         var podne = new DateTime(2026, 9, 7, 12, 0, 0);
         runs.Add(Run(1, podne, cableId: cableId));
@@ -452,7 +457,7 @@ public sealed class DatabaseTests : IDisposable
         var cables = new SqliteCableRepository(_database);
         var runs = new SqliteTestRunRepository(_database);
 
-        long cableId = cables.GetBySpecFileName("M30-W1")!.Id;
+        long cableId = cables.GetBySpecFileName(OgledniKabl)!.Id;
         runs.Add(Run(1, new DateTime(2026, 9, 7, 11, 44, 11), cableId: cableId));
 
         cables.Delete(cableId);
@@ -521,8 +526,8 @@ public sealed class DatabaseTests : IDisposable
         const string crLf = "\r\n";
         string csv =
             "Seq.,Filename,Pass,Date,Time,Lots,Barcode1,Operater,STEP 1,O/S TEST,unit," + crLf +
-            "1,M30-W1,pass,2026/09/07,11:44:11,,,Miloš,PASS,PASS," + crLf +
-            "2,M30-W1,fail,2026/09/07,11:47:34,,,Miloš,FAIL,SHORT O01-O02;FAIL," + crLf;
+            "1,40W1-1,pass,2026/09/07,11:44:11,,,Miloš,PASS,PASS," + crLf +
+            "2,40W1-1,fail,2026/09/07,11:47:34,,,Miloš,FAIL,SHORT O01-O02;FAIL," + crLf;
 
         var cables = new SqliteCableRepository(_database);
         var runs = new SqliteTestRunRepository(_database);

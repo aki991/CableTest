@@ -38,8 +38,94 @@ public sealed class Cable
     /// <summary>Ime fajla na disku, npr. "M100-W1.c61".</summary>
     public string SpecFileNameWithExtension => SpecFileName + Spec.SpecFileNameValidator.Extension;
 
-    /// <summary>Net lista kabla, sortirana po <see cref="CableNet.Ordinal"/>.</summary>
+    /// <summary>Oznaka sa elektro crteža, npr. "=40-W1.1". Prazno za starije zapise.</summary>
+    public string Designation { get; set; } = string.Empty;
+
+    /// <summary>Tip kabla sa crteža, npr. "Wabco 2x1,5 mm²".</summary>
+    public string CableType { get; set; } = string.Empty;
+
+    /// <summary>Dužina kabla u metrima; 0 kad nije poznata.</summary>
+    public decimal LengthM { get; set; }
+
+    /// <summary>Napomene sa crteža, doslovno prepisane.</summary>
+    public string Notes { get; set; } = string.Empty;
+
+    /// <summary>Iz kog dokumenta su podaci, npr. "40_grupa_2_0.pdf".</summary>
+    public string SourceDocument { get; set; } = string.Empty;
+
+    /// <summary>Strana dokumenta; 0 kad nije poznata.</summary>
+    public int SourcePage { get; set; }
+
+    /// <summary>
+    /// Da li se kabl nudi za ispitivanje.
+    /// </summary>
+    /// <remarks>
+    /// Kabl nad kojim je već nešto ispitano se ne briše ni kad izađe iz upotrebe — istorija je
+    /// dokaz da je ispitan. Umesto brisanja se gasi, pa nestaje iz padajuće liste, a ostaje u
+    /// istoriji i u mernim kartama.
+    /// </remarks>
+    public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// Net lista kabla, sortirana po <see cref="CableNet.Ordinal"/>.
+    /// </summary>
+    /// <remarks>
+    /// Za kabl koji ima ožičenje (<see cref="Wires"/>) ovo je <b>izvedena</b> vrednost — računa je
+    /// <see cref="NetBuilder"/> iz terminala i provodnika, i ne unosi se ručno. Za starije kablove
+    /// bez ožičenja ostaje ono što je upisano u tabeli <c>Net</c>.
+    /// </remarks>
     public List<CableNet> Nets { get; } = new();
+
+    /// <summary>Krajevi kabla, onako kako stoje na crtežu.</summary>
+    public List<CableTerminal> Terminals { get; } = new();
+
+    /// <summary>Provodnici kabla: žice i mostovi.</summary>
+    public List<CableWire> Wires { get; } = new();
+
+    /// <summary>Da li je ožičenje uneto — tada je ono izvor istine za net listu.</summary>
+    public bool HasWiring => Wires.Count > 0 && Terminals.Count > 0;
+
+    /// <summary>
+    /// Da li je bar jedna dodela tačke testera privremena, tj. nije potvrđena na adapteru.
+    /// </summary>
+    public bool HasProvisionalPoints => Terminals.Any(t => t.IsProvisional && t.HasTesterPoint);
+
+    /// <summary>Dužina u obliku za prikaz, npr. „4,5 m"; „—" kad nije poznata.</summary>
+    public string LengthText => LengthM <= 0 ? "—" : Decimals.Format(LengthM) + " m";
+
+    /// <summary>Izvor podataka za prikaz, npr. „40_grupa_2_0.pdf, strana 1".</summary>
+    public string SourceText => string.IsNullOrWhiteSpace(SourceDocument)
+        ? "—"
+        : SourcePage > 0
+            ? $"{SourceDocument}, strana {SourcePage.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+            : SourceDocument;
+
+    /// <summary>Terminal po oznaci; <c>null</c> ako ga nema.</summary>
+    public CableTerminal? FindTerminal(string? label)
+        => string.IsNullOrWhiteSpace(label)
+            ? null
+            : Terminals.FirstOrDefault(t => string.Equals(t.Label, label.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Terminal koji je dodeljen zadatoj tački testera; <c>null</c> ako je nijedan nema.</summary>
+    public CableTerminal? FindTerminalByPoint(string? testerPoint)
+    {
+        if (string.IsNullOrWhiteSpace(testerPoint))
+        {
+            return null;
+        }
+
+        string point = testerPoint.Trim();
+        return Terminals.FirstOrDefault(t =>
+            t.HasTesterPoint && string.Equals(t.TesterPoint, point, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>Provodnik koji dodiruje zadati terminal; <c>null</c> ako ga nema.</summary>
+    public CableWire? FindWireOfTerminal(string? label)
+        => string.IsNullOrWhiteSpace(label)
+            ? null
+            : Wires.OrderBy(w => w.WireNo).FirstOrDefault(w =>
+                string.Equals(w.FromTerminal, label.Trim(), StringComparison.OrdinalIgnoreCase)
+                || string.Equals(w.ToTerminal, label.Trim(), StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Da li vrednost kolone "Filename" iz CSV rezultata pripada ovom kablu.
