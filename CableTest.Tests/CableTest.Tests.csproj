@@ -44,6 +44,18 @@
     <Content Include="..\CableTest.App\MainWindow.xaml" Link="MainWindow.xaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+
+    <!-- Ostali XAML, zbog provere tema: boja koja nedostaje ne puca ni pri prevodjenju ni pri
+         ucitavanju — DynamicResource koji se ne razresi prosto ostavi element bez boje. -->
+    <Content Include="..\CableTest.App\App.xaml" Link="Xaml\App.xaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\CableTest.App\Views\*.xaml" Link="Xaml\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\CableTest.App\MainWindow.xaml" Link="Xaml\MainWindow.xaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

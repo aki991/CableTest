@@ -10,6 +10,8 @@
     <AssemblyName>CableTest</AssemblyName>
     <RootNamespace>CableTest.App</RootNamespace>
     <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- Ikona .exe-a i prečice: isti znak koji stoji uz naziv programa u zaglavlju. -->
+    <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,8 +24,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Znak firme se ugrađuje u .exe: aplikacija se pokreće i kad se pored nje ne kopira ništa. -->
+    <!-- Znak firme se ugrađuje u .exe: aplikacija se pokreće i kad se pored nje ne kopira ništa.
+         „logo-znak.png" je sam znak, bez natpisa ispod — to stoji u zaglavlju; „logo.png" je pun
+         znak sa natpisom i ostaje kao izvorni oblik. -->
     <Resource Include="..\logo.png" Link="logo.png" />
+    <Resource Include="..\logo-znak.png" Link="logo-znak.png" />
+    <!-- Ista ikona i kao resurs, da je prozor (a s njim i traka zadataka) uzme iz .exe-a. -->
+    <Resource Include="app.ico" />
   </ItemGroup>
 
   <ItemGroup>

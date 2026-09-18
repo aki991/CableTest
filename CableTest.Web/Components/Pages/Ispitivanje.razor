@@ -84,14 +84,15 @@
                         <dt>Oznaka kabla:</dt>
                         <dd>@(Testing.SelectedCable?.Code ?? "—")</dd>
 
-                        <dt>Naziv:</dt>
-                        <dd>@Naziv</dd>
-
+@*
+                            Net je jedan KRAJ žice, a ispitna tačka je veza između dva kraja
+                            („A01-B01"). Zato netova ima dvaput više nego žica.
+                        *@
                         <dt>Broj netova:</dt>
-                        <dd>@Testing.SelectedNetCount</dd>
+                        <dd>@Testing.SelectedEndCount</dd>
 
                         <dt>Broj ispitnih tačaka:</dt>
-                        <dd>@Testing.SelectedPointCount</dd>
+                        <dd>@Testing.SelectedConnectionCount</dd>
 
                         <dt>Broj portova:</dt>
                         <dd>@Testing.SelectedPortCount</dd>
@@ -118,21 +119,30 @@
             <div class="odeljak">
                 <h2 class="odeljak-naslov">Konektor / mapa pinova</h2>
                 <div class="odeljak-telo">
-                    <div class="pinovi">
-                        @foreach (PortUsage port in Testing.Ports)
-                        {
-                            <div class="pin @(port.Used ? "koriscen" : null)"
-                                 title="@port.Description">
-                                @port.Letter
-                                <span class="pin-tacka"></span>
-                            </div>
-                        }
-                    </div>
+@*
+                        Stoje samo portovi koje kabl zaista koristi; tester ih ima šesnaest, a
+                        kabl retko dodiruje više od dva.
+                    *@
+                    @{
+                        PortUsage[] korisceni = Testing.Ports.Where(p => p.Used).ToArray();
+                    }
 
-                    <div class="legenda">
-                        <span><i class="koriscen"></i> Koristi ovaj kabl</span>
-                        <span><i></i> Ne koristi se</span>
-                    </div>
+                    @if (korisceni.Length == 0)
+                    {
+                        <p class="opis">Izabrani kabl ne koristi nijedan port testera.</p>
+                    }
+                    else
+                    {
+                        <div class="pinovi">
+                            @foreach (PortUsage port in korisceni)
+                            {
+                                <div class="pin koriscen" title="@port.Description">
+                                    @port.Letter
+                                    <span class="pin-tacka"></span>
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
             </div>
 
@@ -198,9 +208,9 @@
                     <thead>
                         <tr>
                             <th>Net</th>
-                            <th>Od</th>
-                            <th>Do</th>
-                            <th class="desno">Tačaka</th>
+                            <th>Tačka</th>
+                            <th>Žica</th>
+                            <th>Veza</th>
                             <th>Stanje</th>
                         </tr>
                     </thead>
@@ -219,9 +229,9 @@
                             {
                                 <tr title="@row.Description">
                                     <td>@row.Ordinal</td>
-                                    <td class="jednoprostorni">@row.From</td>
-                                    <td class="jednoprostorni">@row.To</td>
-                                    <td class="desno">@row.PointCount</td>
+                                    <td class="jednoprostorni">@row.Point</td>
+                                    <td>@row.Wire</td>
+                                    <td class="jednoprostorni">@row.Connection</td>
                                     <td>
                                         <span class="stanje-oznaka @StanjeKlasa(row.Status)">
                                             <Ikona Naziv="@StanjeIkona(row.Status)" />
@@ -277,10 +287,6 @@
         OutcomeState.Fail => "uzvicnik",
         _ => "sat"
     };
-
-    private string Naziv => string.IsNullOrWhiteSpace(Testing.SelectedCable?.Description)
-        ? "—"
-        : Testing.SelectedCable!.Description;
 
     /// <summary>Kablovi izabranog vozila, suženi tekstom iz polja za pretragu.</summary>
     private IReadOnlyList<Cable> FilteredCables

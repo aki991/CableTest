@@ -32,26 +32,26 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Background="{StaticResource PanelBrush}"
-                            BorderBrush="{StaticResource IvicaBrush}"
+                    <Border Background="{DynamicResource PanelBrush}"
+                            BorderBrush="{DynamicResource IvicaBrush}"
                             BorderThickness="1" CornerRadius="12"
                             Padding="20,18" Margin="0,0,16,0">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaVozilo}"
-                                      Width="21" Height="21" Stroke="{StaticResource AkcenatJakBrush}"
+                                      Width="21" Height="21" Stroke="{DynamicResource AkcenatJakBrush}"
                                       VerticalAlignment="Center" Margin="0,0,11,0" />
                                 <TextBlock Text="{Binding Name}" FontSize="18" FontWeight="SemiBold"
-                                           Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                                           Foreground="{DynamicResource TekstJakBrush}" VerticalAlignment="Center" />
                             </StackPanel>
 
                             <TextBlock Text="{Binding CableCount}" FontSize="30" FontWeight="Bold"
-                                       Foreground="{StaticResource AkcenatJakBrush}" Margin="0,12,0,0" />
+                                       Foreground="{DynamicResource AkcenatJakBrush}" Margin="0,12,0,0" />
                             <TextBlock Text="kablova u katalogu" FontSize="13.5"
-                                       Foreground="{StaticResource Tekst2Brush}" Margin="0,3,0,0" />
+                                       Foreground="{DynamicResource Tekst2Brush}" Margin="0,3,0,0" />
 
                             <TextBlock Margin="0,12,0,0" FontSize="13.5" TextWrapping="Wrap"
-                                       Foreground="{StaticResource Tekst2Brush}">
+                                       Foreground="{DynamicResource Tekst2Brush}">
                                 <Run Text="Oznake:" />
                                 <Run Text="{Binding Range, Mode=OneWay}" />
                             </TextBlock>
@@ -62,16 +62,16 @@
         </ItemsControl>
 
         <!-- ================= TABELA ================= -->
-        <Border Grid.Row="2" Background="{StaticResource PanelBrush}"
-                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1"
+        <Border Grid.Row="2" Background="{DynamicResource PanelBrush}"
+                BorderBrush="{DynamicResource IvicaBrush}" BorderThickness="1"
                 CornerRadius="12" Padding="20,18,20,20">
             <DockPanel>
                 <TextBlock DockPanel.Dock="Top" Text="Pregled" Style="{StaticResource SectionTitleStyle}" />
 
-                <Border BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1" CornerRadius="10">
+                <Border BorderBrush="{DynamicResource IvicaBrush}" BorderThickness="1" CornerRadius="10">
                     <DockPanel>
-                        <Border DockPanel.Dock="Top" Background="{StaticResource Panel3Brush}"
-                                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="0,0,0,1"
+                        <Border DockPanel.Dock="Top" Background="{DynamicResource Panel3Brush}"
+                                BorderBrush="{DynamicResource IvicaBrush}" BorderThickness="0,0,0,1"
                                 CornerRadius="10,10,0,0" Padding="14,11">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -94,7 +94,7 @@
                             <ItemsControl ItemsSource="{Binding VehicleRows}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border BorderBrush="#26FFFFFF" BorderThickness="0,0,0,1" Padding="14,11">
+                                        <Border BorderBrush="{DynamicResource RedIvicaBrush}" BorderThickness="0,0,0,1" Padding="14,11">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*" />

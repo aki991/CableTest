@@ -24,57 +24,57 @@
 
         <!-- ================= PLOČICE ================= -->
         <UniformGrid Grid.Row="1" Rows="1" Margin="0,0,0,18">
-            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource IvicaBrush}"
+            <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource IvicaBrush}"
                     BorderThickness="1" CornerRadius="12" Padding="20,18" Margin="0,0,16,0">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaProgram}"
-                              Width="21" Height="21" Stroke="{StaticResource AkcenatJakBrush}"
+                              Width="21" Height="21" Stroke="{DynamicResource AkcenatJakBrush}"
                               VerticalAlignment="Center" Margin="0,0,11,0" />
                         <TextBlock Text="Programa u katalogu" FontSize="18" FontWeight="SemiBold"
-                                   Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                                   Foreground="{DynamicResource TekstJakBrush}" VerticalAlignment="Center" />
                     </StackPanel>
                     <TextBlock Text="{Binding Catalog.CableCount}" FontSize="30" FontWeight="Bold"
-                               Foreground="{StaticResource AkcenatJakBrush}" Margin="0,12,0,0" />
+                               Foreground="{DynamicResource AkcenatJakBrush}" Margin="0,12,0,0" />
                     <TextBlock Text="po jedan za svaki kabl" FontSize="13.5"
-                               Foreground="{StaticResource Tekst2Brush}" Margin="0,3,0,0" />
+                               Foreground="{DynamicResource Tekst2Brush}" Margin="0,3,0,0" />
                 </StackPanel>
             </Border>
 
-            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource IvicaBrush}"
+            <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource IvicaBrush}"
                     BorderThickness="1" CornerRadius="12" Padding="20,18" Margin="0,0,16,0">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaFascikla}"
-                              Width="21" Height="21" Stroke="{StaticResource AkcenatJakBrush}"
+                              Width="21" Height="21" Stroke="{DynamicResource AkcenatJakBrush}"
                               VerticalAlignment="Center" Margin="0,0,11,0" />
                         <TextBlock Text="Spec folder" FontSize="18" FontWeight="SemiBold"
-                                   Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                                   Foreground="{DynamicResource TekstJakBrush}" VerticalAlignment="Center" />
                     </StackPanel>
                     <TextBlock Text="{Binding SpecFolder}" FontSize="13.5" TextWrapping="Wrap"
-                               Foreground="{StaticResource Tekst2Brush}" Margin="0,12,0,0" />
+                               Foreground="{DynamicResource Tekst2Brush}" Margin="0,12,0,0" />
                 </StackPanel>
             </Border>
 
-            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource IvicaBrush}"
+            <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource IvicaBrush}"
                     BorderThickness="1" CornerRadius="12" Padding="20,18">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaOznaka}"
-                              Width="21" Height="21" Stroke="{StaticResource AkcenatJakBrush}"
+                              Width="21" Height="21" Stroke="{DynamicResource AkcenatJakBrush}"
                               VerticalAlignment="Center" Margin="0,0,11,0" />
                         <TextBlock Text="Šablon" FontSize="18" FontWeight="SemiBold"
-                                   Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                                   Foreground="{DynamicResource TekstJakBrush}" VerticalAlignment="Center" />
                     </StackPanel>
                     <TextBlock Text="{Binding TemplatePathText}" FontSize="13.5" TextWrapping="Wrap"
-                               Foreground="{StaticResource Tekst2Brush}" Margin="0,12,0,0" />
+                               Foreground="{DynamicResource Tekst2Brush}" Margin="0,12,0,0" />
                 </StackPanel>
             </Border>
         </UniformGrid>
 
         <!-- ================= TABELA ================= -->
-        <Border Grid.Row="2" Background="{StaticResource PanelBrush}"
-                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1"
+        <Border Grid.Row="2" Background="{DynamicResource PanelBrush}"
+                BorderBrush="{DynamicResource IvicaBrush}" BorderThickness="1"
                 CornerRadius="12" Padding="20,18,20,20">
             <DockPanel>
 
@@ -83,15 +83,15 @@
                              Tag="Pretraga po imenu programa ili kablu…"
                              Padding="37,9,11,9" />
                     <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaLupa}"
-                          Width="17" Height="17" Stroke="{StaticResource Tekst3Brush}"
+                          Width="17" Height="17" Stroke="{DynamicResource Tekst3Brush}"
                           HorizontalAlignment="Left" VerticalAlignment="Center"
                           Margin="12,0,0,0" IsHitTestVisible="False" />
                 </Grid>
 
-                <Border BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1" CornerRadius="10">
+                <Border BorderBrush="{DynamicResource IvicaBrush}" BorderThickness="1" CornerRadius="10">
                     <DockPanel>
-                        <Border DockPanel.Dock="Top" Background="{StaticResource Panel3Brush}"
-                                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="0,0,0,1"
+                        <Border DockPanel.Dock="Top" Background="{DynamicResource Panel3Brush}"
+                                BorderBrush="{DynamicResource IvicaBrush}" BorderThickness="0,0,0,1"
                                 CornerRadius="10,10,0,0" Padding="14,11">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -114,7 +114,7 @@
                             <ItemsControl ItemsSource="{Binding Catalog.ProgramRows}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border BorderBrush="#26FFFFFF" BorderThickness="0,0,0,1" Padding="14,11">
+                                        <Border BorderBrush="{DynamicResource RedIvicaBrush}" BorderThickness="0,0,0,1" Padding="14,11">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="180" />

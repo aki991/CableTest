@@ -7,94 +7,19 @@
 
             <!--
                 ================================================================================
-                TAMNA „RADIONIČKA" TEMA
+                TEMA
                 ================================================================================
 
-                Ekran stoji ceo radni dan iznad ispitnog stola, često pored jakog svetla, i
-                operater ga gleda sa dva-tri koraka. Otuda tamna podloga, krupan tekst i jedno
-                jedino mesto koje sme da bude svetlo i šareno: veliki prikaz ishoda. Sve ostalo
-                je namerno prigušeno, da PROŠAO/PAO nikad nema takmaca u vidnom polju.
+                Boje stoje u „Themes\Tamna.xaml" i „Themes\Svetla.xaml", a ovde je sve ostalo:
+                geometrije ikona, tipografija i izgled kontrola — isto u obe teme.
 
-                Uz svaku boju ide i tekst — boja sama nije dovoljna (daltonizam).
+                Tema se menja u toku rada (Podešavanja), pa se na boje OBAVEZNO upućuje sa
+                DynamicResource. StaticResource bi se razrešio jednom, pri učitavanju, i posle
+                promene teme ostao na starim bojama.
             -->
-
-            <!-- ============================ PODLOGE ============================ -->
-            <SolidColorBrush x:Key="PozadinaBrush" Color="#0E0E0E" />
-            <SolidColorBrush x:Key="MeniBrush" Color="#0A0A0A" />
-            <SolidColorBrush x:Key="PanelBrush" Color="#161616" />
-            <SolidColorBrush x:Key="Panel2Brush" Color="#1C1C1C" />
-            <SolidColorBrush x:Key="Panel3Brush" Color="#242424" />
-
-            <!-- Zaglavlje je belo, da znak firme stoji na podlozi za koju je i crtan. -->
-            <LinearGradientBrush x:Key="ZaglavljeBrush" StartPoint="0,0" EndPoint="1,0.4">
-                <GradientStop Color="#FFFFFF" Offset="0" />
-                <GradientStop Color="#FAFAFA" Offset="0.6" />
-                <GradientStop Color="#F0F0F0" Offset="1" />
-            </LinearGradientBrush>
-
-            <!-- ============================ IVICE ============================ -->
-            <SolidColorBrush x:Key="IvicaBrush" Color="#2A2A2A" />
-            <SolidColorBrush x:Key="IvicaJakaBrush" Color="#3A3A3A" />
-
-            <!-- ============================ TEKST ============================ -->
-            <SolidColorBrush x:Key="TekstBrush" Color="#EDEDED" />
-            <SolidColorBrush x:Key="Tekst2Brush" Color="#A0A0A0" />
-            <SolidColorBrush x:Key="Tekst3Brush" Color="#6E6E6E" />
-            <SolidColorBrush x:Key="BelaBrush" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="CrnaBrush" Color="#111111" />
-
-            <!-- ======================= TEKST NA BELOM ZAGLAVLJU ======================= -->
-            <SolidColorBrush x:Key="ZaglavljeTekstBrush" Color="#111111" />
-            <SolidColorBrush x:Key="ZaglavljeTekst2Brush" Color="#5A5A5A" />
-            <SolidColorBrush x:Key="ZaglavljeIvicaBrush" Color="#D2D2D2" />
-            <SolidColorBrush x:Key="ZaglavljePoljeBrush" Color="#F4F4F4" />
-
-            <!-- ============================ NAGLASAK ============================
-                 Znak firme nema boju osim bele, crne i sive, pa je i naglasak bela:
-                 izabrana stavka menija, izabran red i polje u fokusu. -->
-            <SolidColorBrush x:Key="AkcenatBrush" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="AkcenatJakBrush" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="AkcenatPrigusenBrush" Color="#1E1E1E" />
-            <SolidColorBrush x:Key="SivaZnakaBrush" Color="#9A9A9A" />
-
-            <!-- ============================ ISHODI ============================
-                 Jedino mesto gde boja ostaje. Ishod testa je bezbednosni signal, a ne ukras:
-                 sivi PROŠAO i sivi PAO operater sa dva koraka razdaljine ne razlikuje dovoljno
-                 brzo. Uz boju i ovde ide krupan tekst, zbog daltonizma. -->
-            <SolidColorBrush x:Key="PassBrush" Color="#3FDD7B" />
-            <SolidColorBrush x:Key="PassBackBrush" Color="#10301D" />
-            <SolidColorBrush x:Key="PassBorderBrush" Color="#1E7A43" />
-            <SolidColorBrush x:Key="FailBrush" Color="#FF5069" />
-            <SolidColorBrush x:Key="FailBackBrush" Color="#331015" />
-            <SolidColorBrush x:Key="FailBorderBrush" Color="#8E2433" />
-            <SolidColorBrush x:Key="WaitingBrush" Color="#A0A0A0" />
-            <SolidColorBrush x:Key="WaitingBackBrush" Color="#191919" />
-
-            <!-- ============================ PORUKE ============================ -->
-            <SolidColorBrush x:Key="ErrorBrush" Color="#FF6B7D" />
-            <SolidColorBrush x:Key="ErrorBackBrush" Color="#2B1216" />
-            <SolidColorBrush x:Key="WarningBrush" Color="#E8C275" />
-            <SolidColorBrush x:Key="WarningBackBrush" Color="#282216" />
-            <SolidColorBrush x:Key="WarningBorderBrush" Color="#4A3F26" />
-            <SolidColorBrush x:Key="DemoBrush" Color="#1F1F1F" />
-            <SolidColorBrush x:Key="DemoBorderBrush" Color="#4A4A4A" />
-            <SolidColorBrush x:Key="DemoTextBrush" Color="#E0E0E0" />
-
-            <!-- ============================ MAPA PINOVA ============================
-                 Iskorišćen port je svetao na tamnom, neiskorišćen taman na tamnom — isti odnos
-                 kao beli i crni deo znaka. -->
-            <SolidColorBrush x:Key="PinBrush" Color="#5A5A5A" />
-            <LinearGradientBrush x:Key="PinKoriscenBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#EDEDED" Offset="0" />
-                <GradientStop Color="#C9C9C9" Offset="1" />
-            </LinearGradientBrush>
-            <SolidColorBrush x:Key="PinKoriscenIvicaBrush" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="PinKoriscenTekstBrush" Color="#111111" />
-
-            <LinearGradientBrush x:Key="IzabranRedBrush" StartPoint="0,0" EndPoint="1,0">
-                <GradientStop Color="#333333" Offset="0" />
-                <GradientStop Color="#1A1A1A" Offset="1" />
-            </LinearGradientBrush>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Tamna.xaml" />
+            </ResourceDictionary.MergedDictionaries>
 
             <!-- ================================================================================
                  IKONE
@@ -121,6 +46,10 @@
             <Geometry x:Key="IkonaFascikla">M3.5 6.5a1 1 0 0 1 1-1h4.2l1.8 2h9a1 1 0 0 1 1 1v9.5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-11.5Z</Geometry>
             <Geometry x:Key="IkonaOznaka">M3.5 11.2V4.5a1 1 0 0 1 1-1h6.7a1 1 0 0 1 .7.3l8 8a1 1 0 0 1 0 1.4l-6.7 6.7a1 1 0 0 1-1.4 0l-8-8a1 1 0 0 1-.3-.7Z M7.8 6.5a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z</Geometry>
 
+            <!-- Munja — znak elektroradionice. Zatvorena putanja, pravljena da se puni bojom
+                 (za razliku od IkonaIspitivanje, koja se crta linijom u meniju). -->
+            <Geometry x:Key="IkonaMunjaPuna">M14.6 2 5 13.9h5.3L9.2 22l9.4-12.1h-5.3L14.6 2Z</Geometry>
+
             <Geometry x:Key="IkonaUmanji">M4 11.5h16</Geometry>
             <Geometry x:Key="IkonaUvecaj">M5 5h14v14H5z</Geometry>
             <Geometry x:Key="IkonaVrati">M8 8V5h11v11h-3 M5 8h11v11H5z</Geometry>
@@ -135,7 +64,7 @@
                 <Setter Property="StrokeStartLineCap" Value="Round" />
                 <Setter Property="StrokeEndLineCap" Value="Round" />
                 <Setter Property="StrokeLineJoin" Value="Round" />
-                <Setter Property="Stroke" Value="{StaticResource Tekst2Brush}" />
+                <Setter Property="Stroke" Value="{DynamicResource Tekst2Brush}" />
             </Style>
 
             <!-- ================================================================================
@@ -145,51 +74,58 @@
             <Style x:Key="NaslovKarticeStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="23" />
                 <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Foreground" Value="{StaticResource BelaBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstJakBrush}" />
+            </Style>
+
+            <!-- Linija ispod naslova kartice: narandžasta uz sam naslov, pa se gubi udesno. -->
+            <Style x:Key="NaslovLinijaStyle" TargetType="Rectangle">
+                <Setter Property="Height" Value="2" />
+                <Setter Property="Margin" Value="0,12,0,18" />
+                <Setter Property="Fill" Value="{DynamicResource NaslovLinijaBrush}" />
             </Style>
 
             <Style x:Key="NaslovStraneStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="26" />
                 <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Foreground" Value="{StaticResource BelaBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstJakBrush}" />
                 <Setter Property="Margin" Value="0,0,0,5" />
             </Style>
 
             <Style x:Key="OpisStraneStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="14" />
-                <Setter Property="Foreground" Value="{StaticResource Tekst2Brush}" />
+                <Setter Property="Foreground" Value="{DynamicResource Tekst2Brush}" />
                 <Setter Property="TextWrapping" Value="Wrap" />
             </Style>
 
             <Style x:Key="OdeljakNaslovStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="14.5" />
                 <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
             </Style>
 
             <Style x:Key="LabelStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="13" />
-                <Setter Property="Foreground" Value="{StaticResource Tekst2Brush}" />
+                <Setter Property="Foreground" Value="{DynamicResource Tekst2Brush}" />
                 <Setter Property="Margin" Value="0,0,0,7" />
             </Style>
 
             <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="14" />
                 <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Foreground" Value="{StaticResource Tekst2Brush}" />
+                <Setter Property="Foreground" Value="{DynamicResource Tekst2Brush}" />
                 <Setter Property="Margin" Value="0,0,0,8" />
             </Style>
 
             <Style x:Key="PodatakNazivStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="14.5" />
-                <Setter Property="Foreground" Value="{StaticResource Tekst2Brush}" />
+                <Setter Property="Foreground" Value="{DynamicResource Tekst2Brush}" />
                 <Setter Property="Margin" Value="0,0,16,9" />
             </Style>
 
             <Style x:Key="PodatakVrednostStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="14.5" />
                 <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
                 <Setter Property="Margin" Value="0,0,0,9" />
                 <Setter Property="TextAlignment" Value="Right" />
                 <Setter Property="TextWrapping" Value="Wrap" />
@@ -197,14 +133,14 @@
 
             <Style x:Key="StatusLabelStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="13.5" />
-                <Setter Property="Foreground" Value="{StaticResource Tekst2Brush}" />
+                <Setter Property="Foreground" Value="{DynamicResource Tekst2Brush}" />
                 <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
 
             <Style x:Key="StatusValueStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="13.5" />
                 <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
                 <Setter Property="VerticalAlignment" Value="Center" />
                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
             </Style>
@@ -212,13 +148,13 @@
             <Style x:Key="ZaglavljeTabeleStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="12.5" />
                 <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Foreground" Value="{StaticResource Tekst2Brush}" />
+                <Setter Property="Foreground" Value="{DynamicResource Tekst2Brush}" />
                 <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
 
             <Style x:Key="CelijaStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="14" />
-                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
                 <Setter Property="VerticalAlignment" Value="Center" />
                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
             </Style>
@@ -238,7 +174,7 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Thumb">
-                            <Border Background="#3D3D3D" CornerRadius="4" Margin="3" />
+                            <Border Background="{DynamicResource KlizacBrush}" CornerRadius="4" Margin="3" />
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
@@ -303,12 +239,12 @@
                  ================================================================================ -->
 
             <Style TargetType="ToolTip">
-                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ToolTip">
-                            <Border Background="{StaticResource Panel3Brush}"
-                                    BorderBrush="{StaticResource IvicaJakaBrush}"
+                            <Border Background="{DynamicResource Panel3Brush}"
+                                    BorderBrush="{DynamicResource IvicaJakaBrush}"
                                     BorderThickness="1"
                                     CornerRadius="6"
                                     Padding="10,7"
@@ -327,9 +263,9 @@
             <Style x:Key="DugmeStyle" TargetType="Button">
                 <Setter Property="FontSize" Value="14.5" />
                 <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
-                <Setter Property="Background" Value="{StaticResource Panel3Brush}" />
-                <Setter Property="BorderBrush" Value="{StaticResource IvicaJakaBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
+                <Setter Property="Background" Value="{DynamicResource Panel3Brush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource IvicaJakaBrush}" />
                 <Setter Property="Padding" Value="18,10" />
                 <Setter Property="Cursor" Value="Hand" />
                 <Setter Property="Template">
@@ -344,14 +280,17 @@
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <ControlTemplate.Triggers>
+                                <!-- Podloga se namerno ne dira: „GlavnoDugmeStyle" svoju narandžastu
+                                     podlogu dobija iz Background-a, a setter sa TargetName-om bi je
+                                     nadjačao i pri preletu ugasio dugme. -->
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Okvir" Property="BorderBrush" Value="{StaticResource AkcenatBrush}" />
-                                    <Setter Property="Foreground" Value="{StaticResource BelaBrush}" />
+                                    <Setter TargetName="Okvir" Property="BorderBrush" Value="{DynamicResource AkcenatBrush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource AkcenatJakBrush}" />
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
-                                    <Setter TargetName="Okvir" Property="Background" Value="{StaticResource Panel2Brush}" />
-                                    <Setter TargetName="Okvir" Property="BorderBrush" Value="{StaticResource IvicaBrush}" />
-                                    <Setter Property="Foreground" Value="{StaticResource Tekst3Brush}" />
+                                    <Setter TargetName="Okvir" Property="Background" Value="{DynamicResource Panel2Brush}" />
+                                    <Setter TargetName="Okvir" Property="BorderBrush" Value="{DynamicResource IvicaBrush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource Tekst3Brush}" />
                                     <Setter Property="Cursor" Value="Arrow" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
@@ -372,39 +311,34 @@
                 <Setter Property="MinHeight" Value="58" />
             </Style>
 
-            <!-- Jedno dugme po ekranu sme da bude belo: ono koje operater zaista pritiska. -->
+            <!-- Jedno dugme po ekranu sme da bude narandžasto: ono koje operater zaista pritiska. -->
             <Style x:Key="GlavnoDugmeStyle" TargetType="Button" BasedOn="{StaticResource BigButtonStyle}">
-                <Setter Property="Foreground" Value="{StaticResource CrnaBrush}" />
-                <Setter Property="BorderBrush" Value="{StaticResource BelaBrush}" />
-                <Setter Property="Background">
-                    <Setter.Value>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#FFFFFF" Offset="0" />
-                            <GradientStop Color="#DCDCDC" Offset="1" />
-                        </LinearGradientBrush>
-                    </Setter.Value>
-                </Setter>
+                <Setter Property="Foreground" Value="{DynamicResource CrnaBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource AkcenatPovrsinaJakaBrush}" />
+                <Setter Property="Background" Value="{DynamicResource AkcenatPovrsinaBrush}" />
                 <Style.Triggers>
                     <!-- Prelet i onemogućeno stanje moraju da nadjačaju pravila iz DugmeStyle,
-                         koja tekst prebacuju na svetlo — na belom dugmetu on mora ostati crn. -->
+                         koja tekst prebacuju na narandžasto — na narandžastom dugmetu on mora
+                         ostati taman. -->
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Foreground" Value="{StaticResource CrnaBrush}" />
-                        <Setter Property="Background" Value="{StaticResource BelaBrush}" />
+                        <Setter Property="Foreground" Value="{DynamicResource CrnaBrush}" />
+                        <Setter Property="Background" Value="{DynamicResource AkcenatPovrsinaJakaBrush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource AkcenatPovrsinaJakaBrush}" />
                     </Trigger>
                     <Trigger Property="IsEnabled" Value="False">
-                        <Setter Property="Foreground" Value="{StaticResource Tekst3Brush}" />
-                        <Setter Property="Background" Value="{StaticResource Panel2Brush}" />
-                        <Setter Property="BorderBrush" Value="{StaticResource IvicaBrush}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Tekst3Brush}" />
+                        <Setter Property="Background" Value="{DynamicResource Panel2Brush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource IvicaBrush}" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
 
-            <!-- Dugmad prozora u zaglavlju (umanji, uvećaj, zatvori). Zaglavlje je belo, pa su
-                 i ona tamna. -->
+            <!-- Dugmad prozora u zaglavlju (umanji, uvećaj, zatvori). Zaglavlje je crno, pa su
+                 i ona svetla. -->
             <Style x:Key="CaptionButtonStyle" TargetType="Button">
                 <Setter Property="Width" Value="46" />
                 <Setter Property="Height" Value="34" />
-                <Setter Property="Foreground" Value="{StaticResource ZaglavljeTekst2Brush}" />
+                <Setter Property="Foreground" Value="{DynamicResource ZaglavljeTekst2Brush}" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
@@ -413,8 +347,8 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Okvir" Property="Background" Value="#14000000" />
-                                    <Setter Property="Foreground" Value="{StaticResource ZaglavljeTekstBrush}" />
+                                    <Setter TargetName="Okvir" Property="Background" Value="{DynamicResource ZaglavljePreletBrush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource ZaglavljeTekstBrush}" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -425,7 +359,7 @@
             <Style x:Key="ZatvoriButtonStyle" TargetType="Button" BasedOn="{StaticResource CaptionButtonStyle}">
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Foreground" Value="{StaticResource ZaglavljeTekstBrush}" />
+                        <Setter Property="Foreground" Value="{DynamicResource ZaglavljeTekstBrush}" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -436,11 +370,11 @@
 
             <Style TargetType="TextBox">
                 <Setter Property="FontSize" Value="15" />
-                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
-                <Setter Property="CaretBrush" Value="{StaticResource TekstBrush}" />
-                <Setter Property="SelectionBrush" Value="{StaticResource AkcenatBrush}" />
-                <Setter Property="Background" Value="{StaticResource Panel2Brush}" />
-                <Setter Property="BorderBrush" Value="{StaticResource IvicaJakaBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
+                <Setter Property="CaretBrush" Value="{DynamicResource TekstBrush}" />
+                <Setter Property="SelectionBrush" Value="{DynamicResource AkcenatBrush}" />
+                <Setter Property="Background" Value="{DynamicResource Panel2Brush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource IvicaJakaBrush}" />
                 <Setter Property="Padding" Value="11,9" />
                 <Setter Property="Template">
                     <Setter.Value>
@@ -454,14 +388,23 @@
                                     <!-- Uputstvo u praznom polju: Tag nosi tekst. -->
                                     <TextBlock x:Name="Uputstvo"
                                                Text="{TemplateBinding Tag}"
-                                               Foreground="{StaticResource Tekst3Brush}"
+                                               Foreground="{DynamicResource Tekst3Brush}"
                                                FontSize="{TemplateBinding FontSize}"
                                                Margin="{TemplateBinding Padding}"
                                                VerticalAlignment="Center"
                                                Visibility="Collapsed"
                                                IsHitTestVisible="False" />
+                                    <!--
+                                        Ovde NEMA Margin="{TemplateBinding Padding}", iako ga
+                                        uputstvo iznad ima.
+
+                                        TextBox svoj Padding sam nanosi na tekst, unutar
+                                        PART_ContentHost-a. Kad bi se isti Padding dodao i kao
+                                        Margin, nanosio bi se dvaput: kod polja za pretragu
+                                        (levo uvlačenje 37, zbog lupe) kucanje bi počinjalo na
+                                        75 px umesto na 37 — pored uputstva, a ne preko njega.
+                                    -->
                                     <ScrollViewer x:Name="PART_ContentHost"
-                                                  Margin="{TemplateBinding Padding}"
                                                   VerticalAlignment="Center" />
                                 </Grid>
                             </Border>
@@ -470,7 +413,7 @@
                                     <Setter TargetName="Uputstvo" Property="Visibility" Value="Visible" />
                                 </Trigger>
                                 <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                    <Setter TargetName="Okvir" Property="BorderBrush" Value="{StaticResource AkcenatBrush}" />
+                                    <Setter TargetName="Okvir" Property="BorderBrush" Value="{DynamicResource AkcenatBrush}" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -486,7 +429,7 @@
 
             <Style TargetType="CheckBox">
                 <Setter Property="FontSize" Value="14.5" />
-                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
                 <Setter Property="Cursor" Value="Hand" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
                 <Setter Property="Template">
@@ -494,14 +437,14 @@
                         <ControlTemplate TargetType="CheckBox">
                             <StackPanel Orientation="Horizontal" Background="Transparent">
                                 <Border x:Name="Kutija" Width="19" Height="19" CornerRadius="5"
-                                        Background="{StaticResource Panel2Brush}"
-                                        BorderBrush="{StaticResource IvicaJakaBrush}"
+                                        Background="{DynamicResource Panel2Brush}"
+                                        BorderBrush="{DynamicResource IvicaJakaBrush}"
                                         BorderThickness="1"
                                         VerticalAlignment="Center" Margin="0,0,10,0">
                                     <Path x:Name="Kvacica"
                                           Data="{StaticResource IkonaPotvrda}"
                                           Stretch="Uniform" Width="11" Height="11"
-                                          Stroke="{StaticResource CrnaBrush}" StrokeThickness="2.6"
+                                          Stroke="{DynamicResource CrnaBrush}" StrokeThickness="2.6"
                                           StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                           StrokeLineJoin="Round"
                                           Visibility="Collapsed" />
@@ -510,15 +453,15 @@
                             </StackPanel>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="Kutija" Property="Background" Value="{StaticResource BelaBrush}" />
-                                    <Setter TargetName="Kutija" Property="BorderBrush" Value="{StaticResource BelaBrush}" />
+                                    <Setter TargetName="Kutija" Property="Background" Value="{DynamicResource AkcenatBrush}" />
+                                    <Setter TargetName="Kutija" Property="BorderBrush" Value="{DynamicResource AkcenatPovrsinaJakaBrush}" />
                                     <Setter TargetName="Kvacica" Property="Visibility" Value="Visible" />
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Kutija" Property="BorderBrush" Value="{StaticResource AkcenatBrush}" />
+                                    <Setter TargetName="Kutija" Property="BorderBrush" Value="{DynamicResource AkcenatBrush}" />
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Foreground" Value="{StaticResource Tekst3Brush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource Tekst3Brush}" />
                                     <Setter TargetName="Kutija" Property="Opacity" Value="0.45" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
@@ -546,7 +489,7 @@
                                 <!-- Sklopljeno: strelica udesno. Rasklopljeno: strelica nadole. -->
                                 <Path x:Name="Strelica"
                                       Data="M5.5 3.5 10.5 8 5.5 12.5"
-                                      Stroke="{StaticResource Tekst2Brush}"
+                                      Stroke="{DynamicResource Tekst2Brush}"
                                       StrokeThickness="1.7"
                                       StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                       StrokeLineJoin="Round"
@@ -555,10 +498,10 @@
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsChecked" Value="True">
                                     <Setter TargetName="Strelica" Property="Data" Value="M3.5 5.5 8 10.5 12.5 5.5" />
-                                    <Setter TargetName="Strelica" Property="Stroke" Value="{StaticResource BelaBrush}" />
+                                    <Setter TargetName="Strelica" Property="Stroke" Value="{DynamicResource TekstJakBrush}" />
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Strelica" Property="Stroke" Value="{StaticResource BelaBrush}" />
+                                    <Setter TargetName="Strelica" Property="Stroke" Value="{DynamicResource TekstJakBrush}" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -567,7 +510,7 @@
             </Style>
 
             <Style x:Key="DrvoStavkaStyle" TargetType="TreeViewItem">
-                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
                 <!-- Izbor ide u oba smera: i klik operatera i čvor koji strana sama označi (F8). -->
@@ -603,7 +546,7 @@
                                     <Setter TargetName="Strelica" Property="Visibility" Value="Hidden" />
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="Okvir" Property="Background" Value="{StaticResource IzabranRedBrush}" />
+                                    <Setter TargetName="Okvir" Property="Background" Value="{DynamicResource IzabranRedBrush}" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -636,7 +579,7 @@
             </Style>
 
             <Style TargetType="ComboBoxItem">
-                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
                 <Setter Property="Padding" Value="12,9" />
                 <Setter Property="Template">
                     <Setter.Value>
@@ -646,7 +589,7 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsHighlighted" Value="True">
-                                    <Setter TargetName="Okvir" Property="Background" Value="#24FFFFFF" />
+                                    <Setter TargetName="Okvir" Property="Background" Value="{DynamicResource IstaknutaStavkaBrush}" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -656,9 +599,9 @@
 
             <Style TargetType="ComboBox">
                 <Setter Property="FontSize" Value="15" />
-                <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
-                <Setter Property="Background" Value="{StaticResource Panel2Brush}" />
-                <Setter Property="BorderBrush" Value="{StaticResource IvicaJakaBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
+                <Setter Property="Background" Value="{DynamicResource Panel2Brush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource IvicaJakaBrush}" />
                 <Setter Property="Padding" Value="12,10" />
                 <Setter Property="MinHeight" Value="42" />
                 <Setter Property="Cursor" Value="Hand" />
@@ -686,7 +629,7 @@
 
                                         <Path Grid.Column="1"
                                               Data="M1,1 L5,5 L9,1"
-                                              Stroke="{StaticResource Tekst2Brush}"
+                                              Stroke="{DynamicResource Tekst2Brush}"
                                               StrokeThickness="1.6"
                                               StrokeStartLineCap="Round"
                                               StrokeEndLineCap="Round"
@@ -708,8 +651,8 @@
                                        AllowsTransparency="True"
                                        PopupAnimation="Fade"
                                        Focusable="False">
-                                    <Border Background="{StaticResource Panel3Brush}"
-                                            BorderBrush="{StaticResource IvicaJakaBrush}"
+                                    <Border Background="{DynamicResource Panel3Brush}"
+                                            BorderBrush="{DynamicResource IvicaJakaBrush}"
                                             BorderThickness="1"
                                             CornerRadius="8"
                                             Margin="0,4,0,0"
@@ -723,10 +666,10 @@
                             </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Okvir" Property="BorderBrush" Value="{StaticResource AkcenatBrush}" />
+                                    <Setter TargetName="Okvir" Property="BorderBrush" Value="{DynamicResource AkcenatBrush}" />
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Foreground" Value="{StaticResource Tekst3Brush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource Tekst3Brush}" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -745,8 +688,70 @@
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             </Style>
 
+            <!--
+                Zaglavlje grupe kablova („Grupa 40 · 12 kablova").
+
+                Grupa se otvara klikom na celo zaglavlje, a ne samo na strelicu: red je visok
+                svega tridesetak tačaka, a operater ga pogađa mišem u radioničkim rukavicama.
+            -->
+            <Style x:Key="GrupaKablovaStyle" TargetType="ToggleButton">
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Focusable" Value="False" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border x:Name="Okvir"
+                                    Background="{DynamicResource Panel3Brush}"
+                                    BorderBrush="{DynamicResource RedIvicaBrush}"
+                                    BorderThickness="0,0,0,1"
+                                    Padding="11,11">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Zatvoreno: strelica udesno. Otvoreno: strelica nadole. -->
+                                    <Path x:Name="Strelica" Grid.Column="0"
+                                          Data="M5.5 3.5 10.5 8 5.5 12.5"
+                                          Stroke="{DynamicResource Tekst2Brush}"
+                                          StrokeThickness="1.8"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          StrokeLineJoin="Round"
+                                          HorizontalAlignment="Left" VerticalAlignment="Center" />
+
+                                    <TextBlock x:Name="Naslov" Grid.Column="1"
+                                               Text="{Binding Title}"
+                                               FontSize="14.5" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TekstBrush}"
+                                               VerticalAlignment="Center" />
+
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding CountText}"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource Tekst3Brush}"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Strelica" Property="Data" Value="M3.5 5.5 8 10.5 12.5 5.5" />
+                                    <Setter TargetName="Strelica" Property="Stroke" Value="{DynamicResource AkcenatBrush}" />
+                                    <Setter TargetName="Naslov" Property="Foreground" Value="{DynamicResource AkcenatJakBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Okvir" Property="Background" Value="{DynamicResource IzabranRedBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <Style x:Key="RedKablaStyle" TargetType="ListBoxItem">
-                <Setter Property="Foreground" Value="{StaticResource Tekst2Brush}" />
+                <Setter Property="Foreground" Value="{DynamicResource Tekst2Brush}" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 <Setter Property="Cursor" Value="Hand" />
                 <Setter Property="Template">
@@ -754,24 +759,26 @@
                         <ControlTemplate TargetType="ListBoxItem">
                             <Border x:Name="Okvir"
                                     Background="Transparent"
-                                    BorderBrush="#26FFFFFF"
+                                    BorderBrush="{DynamicResource RedIvicaBrush}"
                                     BorderThickness="0,0,0,1"
+                                    CornerRadius="0"
                                     Padding="11,12">
-                                <Grid>
-                                    <Rectangle x:Name="Traka" Width="3" Fill="Transparent"
-                                               HorizontalAlignment="Left" Margin="-11,-12,0,-12" />
-                                    <ContentPresenter />
-                                </Grid>
+                                <ContentPresenter />
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Okvir" Property="Background" Value="#14FFFFFF" />
-                                    <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+                                    <Setter TargetName="Okvir" Property="Background" Value="{DynamicResource PreletBrush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
                                 </Trigger>
+                                <!-- Izabran kabl se izdvaja punim narandžastim okvirom: operater
+                                     mora sa dva koraka da vidi NA KOM je kablu, pre nego što
+                                     pritisne „Pripremi test program". -->
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="Okvir" Property="Background" Value="{StaticResource IzabranRedBrush}" />
-                                    <Setter TargetName="Traka" Property="Fill" Value="{StaticResource AkcenatBrush}" />
-                                    <Setter Property="Foreground" Value="{StaticResource BelaBrush}" />
+                                    <Setter TargetName="Okvir" Property="Background" Value="{DynamicResource IzabranRedBrush}" />
+                                    <Setter TargetName="Okvir" Property="BorderBrush" Value="{DynamicResource AkcenatBrush}" />
+                                    <Setter TargetName="Okvir" Property="BorderThickness" Value="1" />
+                                    <Setter TargetName="Okvir" Property="CornerRadius" Value="8" />
+                                    <Setter Property="Foreground" Value="{DynamicResource TekstJakBrush}" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -784,7 +791,7 @@
                  ================================================================================ -->
 
             <Style x:Key="MeniStavkaStyle" TargetType="ListBoxItem">
-                <Setter Property="Foreground" Value="{StaticResource Tekst2Brush}" />
+                <Setter Property="Foreground" Value="{DynamicResource Tekst2Brush}" />
                 <Setter Property="FontSize" Value="15.5" />
                 <Setter Property="Cursor" Value="Hand" />
                 <Setter Property="Template">
@@ -799,13 +806,15 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Okvir" Property="Background" Value="#14FFFFFF" />
-                                    <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+                                    <Setter TargetName="Okvir" Property="Background" Value="{DynamicResource PreletBrush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
                                 </Trigger>
+                                <!-- Izabran ekran: narandžasta traka uz ivicu i narandžast tekst.
+                                     Ikona prati boju teksta, pa se menja zajedno sa njim. -->
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="Okvir" Property="Background" Value="{StaticResource IzabranRedBrush}" />
-                                    <Setter TargetName="Traka" Property="Fill" Value="{StaticResource AkcenatBrush}" />
-                                    <Setter Property="Foreground" Value="{StaticResource BelaBrush}" />
+                                    <Setter TargetName="Okvir" Property="Background" Value="{DynamicResource IzabranRedBrush}" />
+                                    <Setter TargetName="Traka" Property="Fill" Value="{DynamicResource AkcenatBrush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource AkcenatJakBrush}" />
                                     <Setter Property="FontWeight" Value="SemiBold" />
                                 </Trigger>
                             </ControlTemplate.Triggers>

@@ -27,6 +27,27 @@ public sealed class Cable
     /// <summary>Oznaka kabla, npr. "M100-W1".</summary>
     public string Code { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Grupa kojoj kabl pripada — deo oznake pre prve crtice, npr. "40" za "40-W1.1".
+    /// </summary>
+    /// <remarks>
+    /// Grupa nije zasebno polje u bazi nego se čita iz oznake, jer to i jeste: oznaka na crtežu
+    /// počinje brojem grupe. Zaseban podatak bi mogao da se razlikuje od oznake, a onda nijedan
+    /// od ta dva ne bi bio pouzdan.
+    /// <para>
+    /// Oznaka bez crtice nema grupu i vraća se prazno — takav kabl se prikazuje odvojeno, a ne
+    /// gura se u tuđu grupu.
+    /// </para>
+    /// </remarks>
+    public string Group
+    {
+        get
+        {
+            int crtica = Code.IndexOf('-');
+            return crtica <= 0 ? string.Empty : Code[..crtica].Trim();
+        }
+    }
+
     public string Description { get; set; } = string.Empty;
 
     /// <summary>

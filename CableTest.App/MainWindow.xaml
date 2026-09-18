@@ -4,12 +4,13 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:views="clr-namespace:CableTest.App.Views"
         Title="CableTest — ispitivanje kablovskih setova"
+        Icon="pack://application:,,,/app.ico"
         Height="860" Width="1440"
         MinHeight="700" MinWidth="1080"
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized"
-        Background="{StaticResource PozadinaBrush}"
-        TextElement.Foreground="{StaticResource TekstBrush}"
+        Background="{DynamicResource PozadinaBrush}"
+        TextElement.Foreground="{DynamicResource TekstBrush}"
         TextOptions.TextFormattingMode="Ideal"
         FontFamily="Segoe UI"
         FontSize="15">
@@ -37,25 +38,35 @@
              ZAGLAVLJE
              ================================================================================ -->
         <Border Grid.Row="0"
-                Background="{StaticResource ZaglavljeBrush}"
-                BorderBrush="{StaticResource ZaglavljeIvicaBrush}"
+                Background="{DynamicResource ZaglavljeBrush}"
+                BorderBrush="{DynamicResource ZaglavljeIvicaBrush}"
                 BorderThickness="0,0,0,1"
                 ClipToBounds="True">
             <Grid>
 
-                <!-- Kose pruge — isti motiv kao na znaku firme. -->
-                <Rectangle HorizontalAlignment="Right" Width="460" Margin="0,-40,220,-40" Opacity="0.07">
-                    <Rectangle.Fill>
-                        <DrawingBrush TileMode="Tile" Viewport="0,0,26,26" ViewportUnits="Absolute">
-                            <DrawingBrush.Drawing>
-                                <GeometryDrawing Brush="Black" Geometry="M0,0 L3,0 L3,26 L0,26 Z" />
-                            </DrawingBrush.Drawing>
-                        </DrawingBrush>
-                    </Rectangle.Fill>
+                <!-- Kose pruge — isti motiv kao na znaku firme; boja im zavisi od teme. -->
+                <Rectangle HorizontalAlignment="Right" Width="460" Margin="0,-40,220,-40"
+                           Opacity="0.05" Fill="{DynamicResource ZaglavljePrugeBrush}">
                     <Rectangle.RenderTransform>
                         <SkewTransform AngleX="-16" />
                     </Rectangle.RenderTransform>
                 </Rectangle>
+
+                <!--
+                    Krupna munja u pozadini zaglavlja — jedva vidljiva, taman toliko da se sa
+                    vrata vidi da je ovo elektroradionica, a ne kancelarijski program.
+                -->
+                <Path Data="{StaticResource IkonaMunjaPuna}"
+                      Fill="{DynamicResource AkcenatBrush}"
+                      Opacity="0.10"
+                      Stretch="Uniform" Height="150"
+                      HorizontalAlignment="Left" VerticalAlignment="Center"
+                      Margin="440,0,0,0"
+                      IsHitTestVisible="False" />
+
+                <!-- Tanka narandžasta nit uz donju ivicu zaglavlja — kao pod naponom. -->
+                <Border VerticalAlignment="Bottom" Height="2" HorizontalAlignment="Stretch"
+                        Background="{DynamicResource ZaglavljeNitBrush}" />
 
                 <DockPanel Margin="24,0,10,0">
 
@@ -100,43 +111,54 @@
                                 VerticalAlignment="Center" Margin="22,0,0,0">
                         <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaOperater}"
                               Width="17" Height="17" Margin="0,0,9,0"
-                              Stroke="{StaticResource ZaglavljeTekst2Brush}" />
+                              Stroke="{DynamicResource ZaglavljeTekst2Brush}" />
                         <TextBlock FontSize="14" VerticalAlignment="Center"
-                                   Foreground="{StaticResource ZaglavljeTekst2Brush}">
+                                   Foreground="{DynamicResource ZaglavljeTekst2Brush}">
                             <Run Text="Operater:" />
                             <Run Text="{Binding Testing.OperatorDisplayName, Mode=OneWay}"
-                                 Foreground="{StaticResource ZaglavljeTekstBrush}" FontWeight="SemiBold" />
+                                 Foreground="{DynamicResource ZaglavljeTekstBrush}" FontWeight="SemiBold" />
                         </TextBlock>
                     </StackPanel>
 
-                    <!-- Stanje veze sa testerom -->
+                    <!--
+                        Stanje veze sa testerom.
+
+                        Pločica je zaobljen pravougaonik, u istom ključu kao kvadratić sa munjom
+                        uz naziv programa — kapsula je pre toga delovala kao nalepnica prilepljena
+                        na zaglavlje.
+
+                        Znak stanja je munja, ista kao u ikoni aplikacije: puna narandžasta kad
+                        veza radi, prazan obris kad ne radi. Uz oba stoji i tekst, pa se ne
+                        oslanja samo na boju i oblik.
+                    -->
                     <Border DockPanel.Dock="Right" VerticalAlignment="Center"
-                            Background="{StaticResource ZaglavljePoljeBrush}"
-                            BorderBrush="{StaticResource ZaglavljeIvicaBrush}"
+                            Background="{DynamicResource ZaglavljePoljeBrush}"
+                            BorderBrush="{DynamicResource ZaglavljeIvicaBrush}"
                             BorderThickness="1"
-                            CornerRadius="999"
-                            Padding="16,9">
+                            CornerRadius="9"
+                            Padding="14,8">
                         <StackPanel Orientation="Horizontal">
-                            <!-- Veza je u redu: puna crna tačka. Nije: prazan sivi kružić.
-                                 Uz oba stoji i tekst, pa se ne oslanja samo na oblik. -->
-                            <Ellipse Width="9" Height="9" VerticalAlignment="Center" Margin="0,0,9,0"
-                                     StrokeThickness="1.6">
-                                <Ellipse.Style>
-                                    <Style TargetType="Ellipse">
+                            <Path Data="{StaticResource IkonaMunjaPuna}"
+                                  Stretch="Uniform" Width="12" Height="17"
+                                  VerticalAlignment="Center" Margin="0,0,10,0">
+                                <Path.Style>
+                                    <Style TargetType="Path">
                                         <Setter Property="Fill" Value="Transparent" />
-                                        <Setter Property="Stroke" Value="{StaticResource SivaZnakaBrush}" />
+                                        <Setter Property="Stroke" Value="{DynamicResource SivaZnakaBrush}" />
+                                        <Setter Property="StrokeThickness" Value="1.6" />
+                                        <Setter Property="StrokeLineJoin" Value="Round" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Testing.ConnectionOk}" Value="True">
-                                                <Setter Property="Fill" Value="{StaticResource ZaglavljeTekstBrush}" />
-                                                <Setter Property="Stroke" Value="{StaticResource ZaglavljeTekstBrush}" />
+                                                <Setter Property="Fill" Value="{DynamicResource AkcenatBrush}" />
+                                                <Setter Property="Stroke" Value="{DynamicResource AkcenatBrush}" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </Ellipse.Style>
-                            </Ellipse>
+                                </Path.Style>
+                            </Path>
                             <TextBlock Text="{Binding Testing.ConnectionText}"
                                        FontSize="14" FontWeight="SemiBold"
-                                       Foreground="{StaticResource ZaglavljeTekstBrush}"
+                                       Foreground="{DynamicResource ZaglavljeTekstBrush}"
                                        VerticalAlignment="Center" />
                         </StackPanel>
                     </Border>
@@ -144,14 +166,50 @@
                     <!-- Znak firme -->
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <!--
-                            Zaglavlje je belo upravo zbog ovoga: znak je crno-sivi crtež na
-                            providnoj podlozi, pa se ovde prikazuje neizmenjen, onakav kakav jeste.
+                            Znak se prikazuje na dva načina, a tema bira koji:
+
+                            • svetla tema — sama slika, sa svim sivim tonovima, jer je belo
+                              zaglavlje podloga za koju je znak i crtan;
+                            • tamna tema — znak je crn crtež i na crnom se ne bi video, pa ide
+                              kao bela površina kojoj sam znak služi kao maska providnosti:
+                              ista silueta, samo bela.
+
+                            Koristi se „logo-znak.png" — sam znak, bez natpisa „BORBENI SLOŽENI
+                            SISTEMI" ispod njega. Visina ostaje 46, ista kao kad je natpis bio
+                            unutra, pa sam znak sada zauzima ceo taj prostor i krupniji je.
+
+                            Širina 145 je tačan odnos slike (669×212) na visini 46, pa maska ne
+                            ostavlja prazan hod sa strane.
                         -->
-                        <Image Source="pack://application:,,,/logo.png" Height="46"
-                               Stretch="Uniform" SnapsToDevicePixels="True" />
-                        <Rectangle Width="1" Height="34" Fill="{StaticResource ZaglavljeIvicaBrush}" Margin="18,0" />
-                        <TextBlock Text="CableTest" FontSize="25" FontWeight="SemiBold"
-                                   Foreground="{StaticResource ZaglavljeTekstBrush}" VerticalAlignment="Center" />
+                        <Image Source="pack://application:,,,/logo-znak.png"
+                               Width="145" Height="46" Stretch="Uniform"
+                               SnapsToDevicePixels="True"
+                               Visibility="{DynamicResource ZnakSlikaVidljivost}" />
+
+                        <Rectangle Width="145" Height="46" Fill="{DynamicResource ZnakBrush}"
+                                   SnapsToDevicePixels="True"
+                                   Visibility="{DynamicResource ZnakSiluetaVidljivost}">
+                            <Rectangle.OpacityMask>
+                                <ImageBrush ImageSource="pack://application:,,,/logo-znak.png" Stretch="Uniform" />
+                            </Rectangle.OpacityMask>
+                        </Rectangle>
+
+                        <Rectangle Width="1" Height="34" Fill="{DynamicResource ZaglavljeIvicaBrush}" Margin="18,0" />
+
+                        <!-- Munja uz naziv programa — znak elektroradionice. -->
+                        <Border Width="34" Height="34" CornerRadius="9"
+                                Background="{DynamicResource AkcenatPovrsinaBrush}"
+                                VerticalAlignment="Center" Margin="0,0,13,0">
+                            <Path Data="{StaticResource IkonaMunjaPuna}"
+                                  Fill="{DynamicResource CrnaBrush}"
+                                  Stretch="Uniform" Width="17" Height="17"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+
+                        <TextBlock Text="Cable" FontSize="25" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource ZaglavljeTekstBrush}" />
+                        <TextBlock Text="Test" FontSize="25" FontWeight="Bold" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource ZaglavljeTekstBrush}" />
                     </StackPanel>
                 </DockPanel>
             </Grid>
@@ -168,19 +226,11 @@
 
             <!-- ============================== BOČNI MENI ============================== -->
             <Border Grid.Column="0"
-                    Background="{StaticResource MeniBrush}"
-                    BorderBrush="{StaticResource IvicaBrush}"
+                    Background="{DynamicResource MeniBrush}"
+                    BorderBrush="{DynamicResource IvicaBrush}"
                     BorderThickness="0,0,1,0"
                     ClipToBounds="True">
                 <DockPanel>
-                    <!-- Vodeni žig na dnu menija — isti znak, jedva vidljiv. -->
-                    <Rectangle DockPanel.Dock="Bottom" Height="76" Margin="18,0,18,14"
-                               Fill="{StaticResource BelaBrush}" Opacity="0.06">
-                        <Rectangle.OpacityMask>
-                            <ImageBrush ImageSource="pack://application:,,,/logo.png" Stretch="Uniform" />
-                        </Rectangle.OpacityMask>
-                    </Rectangle>
-
                     <ListBox x:Name="Meni"
                              SelectedIndex="0"
                              Background="Transparent"
@@ -271,8 +321,8 @@
 
                 <!-- ================= DEMO TRAKA ================= -->
                 <Border Grid.Row="0"
-                        Background="{StaticResource DemoBrush}"
-                        BorderBrush="{StaticResource DemoBorderBrush}"
+                        Background="{DynamicResource DemoBrush}"
+                        BorderBrush="{DynamicResource DemoBorderBrush}"
                         BorderThickness="0,0,0,1"
                         Padding="24,11"
                         Visibility="{Binding Testing.IsDemoMode, Converter={StaticResource BoolToVisibility}}">
@@ -286,7 +336,7 @@
                                     Command="{Binding Testing.SimulateFailCommand}" />
                         </StackPanel>
                         <TextBlock Text="{Binding Testing.DemoBannerText}"
-                                   Foreground="{StaticResource DemoTextBrush}"
+                                   Foreground="{DynamicResource DemoTextBrush}"
                                    FontSize="14" FontWeight="SemiBold"
                                    VerticalAlignment="Center"
                                    TextWrapping="Wrap" />
@@ -298,12 +348,12 @@
                         Visibility="{Binding Testing.HasProblem, Converter={StaticResource BoolToVisibility}}">
                     <Border.Style>
                         <Style TargetType="Border">
-                            <Setter Property="Background" Value="{StaticResource WarningBackBrush}" />
-                            <Setter Property="BorderBrush" Value="{StaticResource WarningBorderBrush}" />
+                            <Setter Property="Background" Value="{DynamicResource WarningBackBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource WarningBorderBrush}" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Testing.ProblemIsError}" Value="True">
-                                    <Setter Property="Background" Value="{StaticResource ErrorBackBrush}" />
-                                    <Setter Property="BorderBrush" Value="{StaticResource FailBorderBrush}" />
+                                    <Setter Property="Background" Value="{DynamicResource ErrorBackBrush}" />
+                                    <Setter Property="BorderBrush" Value="{DynamicResource FailBorderBrush}" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -312,10 +362,10 @@
                                FontSize="14" FontWeight="SemiBold">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Testing.ProblemIsError}" Value="True">
-                                        <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -360,8 +410,8 @@
 
                 <!-- ================= TRAKA STANJA ================= -->
                 <Border Grid.Row="3"
-                        Background="{StaticResource MeniBrush}"
-                        BorderBrush="{StaticResource IvicaBrush}"
+                        Background="{DynamicResource MeniBrush}"
+                        BorderBrush="{DynamicResource IvicaBrush}"
                         BorderThickness="0,1,0,0"
                         Padding="24,11">
                     <Grid>
@@ -378,11 +428,11 @@
                                 <Ellipse.Style>
                                     <Style TargetType="Ellipse">
                                         <Setter Property="Fill" Value="Transparent" />
-                                        <Setter Property="Stroke" Value="{StaticResource Tekst3Brush}" />
+                                        <Setter Property="Stroke" Value="{DynamicResource Tekst3Brush}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Testing.IsMonitoring}" Value="True">
-                                                <Setter Property="Fill" Value="{StaticResource BelaBrush}" />
-                                                <Setter Property="Stroke" Value="{StaticResource BelaBrush}" />
+                                                <Setter Property="Fill" Value="{DynamicResource AkcenatBrush}" />
+                                                <Setter Property="Stroke" Value="{DynamicResource AkcenatBrush}" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -393,7 +443,7 @@
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,26,0">
                             <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaFascikla}"
-                                  Width="16" Height="16" Stroke="{StaticResource Tekst3Brush}"
+                                  Width="16" Height="16" Stroke="{DynamicResource Tekst3Brush}"
                                   VerticalAlignment="Center" Margin="0,0,9,0" />
                             <TextBlock Text="{Binding Testing.WatchedFileText}"
                                        ToolTip="{Binding Testing.WatchedFileText}"
@@ -402,31 +452,31 @@
 
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,26,0">
                             <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaOsvezi}"
-                                  Width="16" Height="16" Stroke="{StaticResource Tekst3Brush}"
+                                  Width="16" Height="16" Stroke="{DynamicResource Tekst3Brush}"
                                   VerticalAlignment="Center" Margin="0,0,9,0" />
                             <TextBlock Style="{StaticResource StatusLabelStyle}">
                                 <Run Text="Poslednja promena:" />
                                 <Run Text="{Binding Testing.LastChangeText, Mode=OneWay}"
-                                     Foreground="{StaticResource TekstBrush}" FontWeight="SemiBold" />
+                                     Foreground="{DynamicResource TekstBrush}" FontWeight="SemiBold" />
                             </TextBlock>
                         </StackPanel>
 
                         <StackPanel Grid.Column="3" Orientation="Horizontal">
-                            <Rectangle Width="1" Height="18" Fill="{StaticResource IvicaJakaBrush}" Margin="0,0,22,0" />
+                            <Rectangle Width="1" Height="18" Fill="{DynamicResource IvicaJakaBrush}" Margin="0,0,22,0" />
                             <TextBlock Style="{StaticResource StatusLabelStyle}" Margin="0,0,22,0">
                                 <Run Text="Testova danas:" />
                                 <Run Text="{Binding History.TodayTotal, Mode=OneWay}"
-                                     Foreground="{StaticResource TekstBrush}" FontWeight="SemiBold" />
+                                     Foreground="{DynamicResource TekstBrush}" FontWeight="SemiBold" />
                             </TextBlock>
                             <TextBlock Style="{StaticResource StatusLabelStyle}" Margin="0,0,22,0">
                                 <Run Text="Prošlo:" />
                                 <Run Text="{Binding History.TodayPassed, Mode=OneWay}"
-                                     Foreground="{StaticResource PassBrush}" FontWeight="SemiBold" />
+                                     Foreground="{DynamicResource PassBrush}" FontWeight="SemiBold" />
                             </TextBlock>
                             <TextBlock Style="{StaticResource StatusLabelStyle}">
                                 <Run Text="Palo:" />
                                 <Run Text="{Binding History.TodayFailed, Mode=OneWay}"
-                                     Foreground="{StaticResource FailBrush}" FontWeight="SemiBold" />
+                                     Foreground="{DynamicResource FailBrush}" FontWeight="SemiBold" />
                             </TextBlock>
                         </StackPanel>
                     </Grid>

@@ -52,6 +52,7 @@ public class TestingViewXamlTests
     {
         HashSet<string> svojstva = Svojstva(
             typeof(TestingViewModel),
+            typeof(CableGroupViewModel),
             typeof(PortUsage),
             typeof(NetRow),
             typeof(Cable),
@@ -143,35 +144,18 @@ public class TestingViewXamlTests
     [Fact]
     public void Xaml_SeUcitavaISviResursiPostoje()
     {
-        Exception? greska = null;
-
         // WPF elementi se prave samo na STA niti; nijedan prozor se ne prikazuje.
-        var nit = new Thread(() =>
+        // Aplikacija (a s njom i App.xaml, tj. svi resursi) već stoji na toj niti.
+        WpfHost.Izvrsi(() =>
         {
-            try
-            {
-                var app = new global::CableTest.App.App();
-                app.InitializeComponent();   // učitava App.xaml, tj. sve resurse
-
-                _ = new global::CableTest.App.Views.TestingView();
-                _ = new global::CableTest.App.Views.VozilaView();
-                _ = new global::CableTest.App.Views.KabloviView();
-                _ = new global::CableTest.App.Views.TestProgramiView();
-                _ = new global::CableTest.App.Views.IstorijaView();
-                _ = new global::CableTest.App.Views.PodesavanjaView();
-                _ = new global::CableTest.App.Views.CableConnectorView();
-            }
-            catch (Exception ex)
-            {
-                greska = ex;
-            }
+            _ = new global::CableTest.App.Views.TestingView();
+            _ = new global::CableTest.App.Views.VozilaView();
+            _ = new global::CableTest.App.Views.KabloviView();
+            _ = new global::CableTest.App.Views.TestProgramiView();
+            _ = new global::CableTest.App.Views.IstorijaView();
+            _ = new global::CableTest.App.Views.PodesavanjaView();
+            _ = new global::CableTest.App.Views.CableConnectorView();
         });
-
-        nit.SetApartmentState(ApartmentState.STA);
-        nit.Start();
-        nit.Join(TimeSpan.FromSeconds(30));
-
-        Assert.Null(greska);
     }
 
     // -------------------------------------------------------------------------------------

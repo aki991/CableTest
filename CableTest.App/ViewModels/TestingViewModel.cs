@@ -53,8 +53,15 @@ public enum OutcomeState
 /// </remarks>
 public sealed class TestingViewModel : ObservableObject, IDisposable
 {
-    /// <summary>Tekst velikog prikaza dok nijedan rezultat nije stigao.</summary>
-    public const string WaitingText = "ČEKA SE REZULTAT";
+    /// <summary>
+    /// Tekst velikog prikaza dok nijedan rezultat nije stigao.
+    /// </summary>
+    /// <remarks>
+    /// Namerno kratak: ovaj tekst se prikazuje u najkrupnijem slogu na ekranu, a duža rečenica
+    /// se u toj veličini smanjivala da stane i time gubila smisao — krupan tekst uz boju postoji
+    /// da bi se ishod video sa dva koraka. Šta se tačno čeka piše ispod, u podnaslovu.
+    /// </remarks>
+    public const string WaitingText = "REZULTAT";
 
     private readonly ITesterGateway _gateway;
     private readonly IVehicleRepository _vehicles;
@@ -135,10 +142,31 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
     public ObservableCollection<Cable> Cables { get; } = new();
 
     /// <summary>
-    /// Mapa pinova izabranog kabla — svih 16 portova testera (A..P), sa oznakom da li ih kabl
-    /// koristi.
+    /// Grupe kablova izabranog vozila, redom po oznaci grupe.
     /// </summary>
+    /// <remarks>
+    /// Spisak kablova se prikazuje grupisano: operater prvo vidi „Grupa 40", pa tek kad je otvori
+    /// i kablove iz nje. Grupisanje radi pogled nad <see cref="Cables"/>, a ova zbirka drži
+    /// zaglavlja — ista ona koja su i ključevi grupisanja, pa se stanje „otvoreno/zatvoreno"
+    /// ne gubi kad se pogled preračuna zbog pretrage.
+    /// </remarks>
+    public ObservableCollection<CableGroupViewModel> CableGroups { get; } = new();
+
+    private readonly Dictionary<string, CableGroupViewModel> _cableGroups =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Mapa pinova izabranog kabla — <b>samo portovi koje kabl koristi</b>.
+    /// </summary>
+    /// <remarks>
+    /// Tester ima šesnaest portova (A..P), a kabl retko dodiruje više od dva. Prikaz svih
+    /// šesnaest značio je da operater svaki put traži ona dva među četrnaest praznih; ovako
+    /// piše samo ono što se zaista priključuje.
+    /// </remarks>
     public ObservableCollection<PortUsage> Ports { get; } = new();
+
+    /// <summary>Da li izabrani kabl uopšte koristi neki port.</summary>
+    public bool HasPorts => Ports.Count > 0;
 
     /// <summary>Tabela netova izabranog kabla, sa ishodom poslednjeg prikazanog rezultata.</summary>
     public ObservableCollection<NetRow> NetRows { get; } = new();
@@ -155,6 +183,7 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
             if (Set(ref _cableFilter, value))
             {
                 CollectionViewSource.GetDefaultView(Cables).Refresh();
+                OpenGroupsWithMatches();
             }
         }
     }
@@ -241,8 +270,8 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
                 nameof(CanSimulate),
                 nameof(SelectedCableCode),
                 nameof(SelectedCableName),
-                nameof(SelectedNetCount),
-                nameof(SelectedPointCount),
+                nameof(SelectedEndCount),
+                nameof(SelectedConnectionCount),
                 nameof(SelectedPortCount),
                 nameof(SelectedSpecFileText),
                 nameof(SelectedDesignationText),
@@ -266,11 +295,22 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
         ? NetRow.Unknown
         : SelectedCable!.Description;
 
-    /// <summary>Broj netova izabranog kabla.</summary>
-    public int SelectedNetCount => SelectedCable?.Nets.Count ?? 0;
+    /// <summary>
+    /// Broj krajeva žica — na ekranu „Broj netova".
+    /// </summary>
+    /// <remarks>
+    /// Operater „netom" zove jedan KRAJ provodnika: žica sa dva kraja daje dva neta, pa ih je
+    /// uvek dvaput više nego žica. U modelu i u .c61 fajlu <see cref="Core.Model.CableNet"/>
+    /// znači grupu spojenih tačaka („A01-B01"), jednu po žici — otuda dva različita broja.
+    /// Svojstva zato nose imena po tome ŠTA broje, a ne po reči „net".
+    /// </remarks>
+    public int SelectedEndCount => CableLayout.CountPoints(SelectedCable);
 
-    /// <summary>Broj ispitnih tačaka izabranog kabla.</summary>
-    public int SelectedPointCount => CableLayout.CountPoints(SelectedCable);
+    /// <summary>
+    /// Broj veza između dve tačke testera („A01-B01") — na ekranu „Broj ispitnih tačaka".
+    /// </summary>
+    /// <remarks>Toliko redova ima i net lista koja ide u tester, po jedan <c>OSNet:</c>.</remarks>
+    public int SelectedConnectionCount => SelectedCable?.Nets.Count ?? 0;
 
     /// <summary>Broj portova (konektora) koje izabrani kabl koristi.</summary>
     public int SelectedPortCount => CableLayout.CountPorts(SelectedCable);
@@ -589,7 +629,13 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
         _started = true;
 
         // Filtar spiska kablova: prazan tekst pušta sve.
-        CollectionViewSource.GetDefaultView(Cables).Filter = MatchesFilter;
+        ICollectionView pogledKablova = CollectionViewSource.GetDefaultView(Cables);
+        pogledKablova.Filter = MatchesFilter;
+
+        // Grupisanje po oznaci grupe iz šifre kabla („40-W1.1" → „40"). Ključ grupe nije niska
+        // nego zaglavlje iz CableGroups, da otvorena grupa ostane otvorena i posle preračunavanja.
+        pogledKablova.GroupDescriptions.Add(
+            new PropertyGroupDescription(nameof(Cable.Group), new CableGroupKeyConverter(GroupFor)));
 
         // Mapa pinova ima svih 16 portova i kad kabl nije izabran — prazan okvir bi izgledao
         // kao da ekran nije do kraja učitan.
@@ -1042,7 +1088,69 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
             }
         }
 
+        LoadCableGroups();
+
         SelectedCable = Cables.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Pravi zaglavlja grupa za kablove izabranog vozila.
+    /// </summary>
+    /// <remarks>
+    /// Grupe kreću <b>zatvorene</b>, i onda kad je kabl iz njih već izabran. Izbor kabla i
+    /// otvorenost grupe su dve različite stvari: prvi je podatak sa kojim se radi, druga je samo
+    /// to koliko se spiska vidi. Kad bi izbor sam otvarao grupu, spisak bi se pri svakoj promeni
+    /// vozila zatekao otvoren, a upravo se tražilo suprotno.
+    /// </remarks>
+    private void LoadCableGroups()
+    {
+        CableGroups.Clear();
+
+        foreach (IGrouping<string, Cable> grupa in Cables
+                     .GroupBy(c => c.Group, StringComparer.OrdinalIgnoreCase)
+                     .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            CableGroupViewModel zaglavlje = GroupFor(grupa.Key);
+            zaglavlje.Count = grupa.Count();
+            zaglavlje.IsExpanded = false;
+
+            CableGroups.Add(zaglavlje);
+        }
+    }
+
+    /// <summary>Zaglavlje jedne grupe; pravi se pri prvom traženju i posle se samo nalazi.</summary>
+    /// <remarks>
+    /// Isti primerak po oznaci grupe — zato što je taj primerak ključ grupisanja u pogledu, pa
+    /// dva objekta za istu grupu značila bi i dva zaglavlja u spisku.
+    /// </remarks>
+    private CableGroupViewModel GroupFor(string name)
+    {
+        if (!_cableGroups.TryGetValue(name, out CableGroupViewModel? group))
+        {
+            group = new CableGroupViewModel(name);
+            _cableGroups[name] = group;
+        }
+
+        return group;
+    }
+
+    /// <summary>
+    /// Otvara grupe u kojima pretraga ima pogodaka, a ostale zatvara.
+    /// </summary>
+    /// <remarks>
+    /// Bez ovoga bi pretraga izgledala kao da ništa ne nalazi: pogodak bi bio u grupi koja je
+    /// zatvorena, pa se ne bi video. Kad se pretraga obriše, sve se vraća na zatvoreno.
+    /// </remarks>
+    private void OpenGroupsWithMatches()
+    {
+        bool trazi = !string.IsNullOrWhiteSpace(_cableFilter);
+
+        foreach (CableGroupViewModel grupa in CableGroups)
+        {
+            grupa.IsExpanded = trazi && Cables.Any(
+                c => string.Equals(c.Group, grupa.Name, StringComparison.OrdinalIgnoreCase)
+                     && MatchesFilter(c));
+        }
     }
 
     /// <summary>Da li kabl odgovara tekstu iz polja za pretragu.</summary>
@@ -1068,10 +1176,12 @@ public sealed class TestingViewModel : ObservableObject, IDisposable
     {
         Ports.Clear();
 
-        foreach (PortUsage port in CableLayout.Ports(SelectedCable))
+        foreach (PortUsage port in CableLayout.Ports(SelectedCable).Where(p => p.Used))
         {
             Ports.Add(port);
         }
+
+        Raise(nameof(HasPorts));
     }
 
     private void LoadNetRows()

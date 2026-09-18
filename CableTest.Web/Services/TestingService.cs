@@ -774,10 +774,10 @@ public sealed class TestingService : IDisposable
     public bool ConnectionOk => IsDemoMode || _isMonitoring;
 
     /// <summary>Broj netova izabranog kabla.</summary>
-    public int SelectedNetCount => _selectedCable?.Nets.Count ?? 0;
+    public int SelectedEndCount => CableLayout.CountPoints(_selectedCable);
 
     /// <summary>Broj ispitnih tačaka izabranog kabla.</summary>
-    public int SelectedPointCount => CableLayout.CountPoints(_selectedCable);
+    public int SelectedConnectionCount => _selectedCable?.Nets.Count ?? 0;
 
     /// <summary>
     /// Mapa pinova izabranog kabla: svih 16 portova testera (A..P), sa oznakom da li ih kabl

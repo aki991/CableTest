@@ -22,15 +22,15 @@
 
     <UserControl.Resources>
         <Style x:Key="OdeljakStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource IvicaBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource IvicaBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="12" />
         </Style>
 
         <Style x:Key="OdeljakZaglavljeStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource Panel3Brush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource IvicaBrush}" />
+            <Setter Property="Background" Value="{DynamicResource Panel3Brush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource IvicaBrush}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
             <Setter Property="CornerRadius" Value="12,12,0,0" />
             <Setter Property="Padding" Value="16,11" />
@@ -38,14 +38,14 @@
 
         <Style x:Key="NazivStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13" />
-            <Setter Property="Foreground" Value="{StaticResource Tekst2Brush}" />
+            <Setter Property="Foreground" Value="{DynamicResource Tekst2Brush}" />
             <Setter Property="Margin" Value="0,0,12,4" />
         </Style>
 
         <Style x:Key="VrednostStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontFamily" Value="Consolas" />
-            <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
             <Setter Property="Margin" Value="0,0,0,4" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
@@ -57,10 +57,10 @@
         <Style x:Key="LogPoljeStyle" TargetType="TextBox">
             <Setter Property="FontFamily" Value="Consolas" />
             <Setter Property="FontSize" Value="12.5" />
-            <Setter Property="Foreground" Value="{StaticResource TekstBrush}" />
-            <Setter Property="CaretBrush" Value="{StaticResource TekstBrush}" />
-            <Setter Property="SelectionBrush" Value="{StaticResource AkcenatBrush}" />
-            <Setter Property="Background" Value="{StaticResource Panel2Brush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TekstBrush}" />
+            <Setter Property="CaretBrush" Value="{DynamicResource TekstBrush}" />
+            <Setter Property="SelectionBrush" Value="{DynamicResource AkcenatBrush}" />
+            <Setter Property="Background" Value="{DynamicResource Panel2Brush}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="14,10" />
             <Setter Property="IsReadOnly" Value="True" />
@@ -82,7 +82,7 @@
 
         <!-- Jedna kontrola u desnom panelu: dugme/meni/kartica, ili polje sa čitanjem i upisom. -->
         <DataTemplate x:Key="KontrolaTemplate" DataType="{x:Type vm:UiaActionViewModel}">
-            <Border BorderBrush="#26FFFFFF" BorderThickness="0,0,0,1" Padding="0,7">
+            <Border BorderBrush="{DynamicResource RedIvicaBrush}" BorderThickness="0,0,0,1" Padding="0,7">
                 <StackPanel>
                     <Grid>
                         <!-- Dugme, stavka menija ili kartica -->
@@ -94,13 +94,13 @@
 
                             <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
                                 <TextBlock Text="{Binding Name}" FontSize="13.5" FontFamily="Consolas"
-                                           Foreground="{StaticResource TekstBrush}" TextWrapping="Wrap" />
+                                           Foreground="{DynamicResource TekstBrush}" TextWrapping="Wrap" />
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="⚠ traži potvrdu" FontSize="11.5"
-                                               Foreground="{StaticResource WarningBrush}" Margin="0,2,10,0"
+                                               Foreground="{DynamicResource WarningBrush}" Margin="0,2,10,0"
                                                Visibility="{Binding NeedsConfirmation, Converter={StaticResource BoolToVisibility}}" />
                                     <TextBlock Text="{Binding Status}" FontSize="11.5"
-                                               Foreground="{StaticResource Tekst3Brush}" Margin="0,2,0,0"
+                                               Foreground="{DynamicResource Tekst3Brush}" Margin="0,2,0,0"
                                                TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
                             </StackPanel>
@@ -121,9 +121,9 @@
 
                             <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
                                 <TextBlock Text="{Binding Name}" FontSize="13.5" FontFamily="Consolas"
-                                           Foreground="{StaticResource TekstBrush}" />
+                                           Foreground="{DynamicResource TekstBrush}" />
                                 <TextBlock Text="{Binding Status}" FontSize="11.5"
-                                           Foreground="{StaticResource Tekst3Brush}" Margin="0,2,0,0"
+                                           Foreground="{DynamicResource Tekst3Brush}" Margin="0,2,0,0"
                                            TextTrimming="CharacterEllipsis" />
                             </StackPanel>
 
@@ -146,12 +146,12 @@
                     <StackPanel Margin="0,6,0,2"
                                 Visibility="{Binding HasDiscovery, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock Text="{Binding DiscoveryHeader}" FontSize="11.5" FontWeight="SemiBold"
-                                   Foreground="{StaticResource Tekst2Brush}" TextWrapping="Wrap" />
+                                   Foreground="{DynamicResource Tekst2Brush}" TextWrapping="Wrap" />
                         <TextBlock Text="{Binding DiscoveryDetails}" FontSize="11.5" FontFamily="Consolas"
-                                   Foreground="{StaticResource Tekst3Brush}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource Tekst3Brush}" TextWrapping="Wrap"
                                    Visibility="{Binding DiscoveryFound, Converter={StaticResource BoolToVisibility}}" />
                         <TextBlock Text="{Binding DiscoveryNearest}" FontSize="11.5"
-                                   Foreground="{StaticResource Tekst3Brush}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource Tekst3Brush}" TextWrapping="Wrap"
                                    Visibility="{Binding HasNearest, Converter={StaticResource BoolToVisibility}}" />
                     </StackPanel>
                 </StackPanel>
@@ -189,17 +189,17 @@
 
                 <StackPanel>
                     <TextBlock Text="{Binding Header}" FontSize="13.5" FontWeight="SemiBold"
-                               Foreground="{StaticResource TekstBrush}" TextTrimming="CharacterEllipsis" />
+                               Foreground="{DynamicResource TekstBrush}" TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{Binding Details}" FontSize="11.5" FontFamily="Consolas"
-                               Foreground="{StaticResource Tekst2Brush}" TextTrimming="CharacterEllipsis" />
+                               Foreground="{DynamicResource Tekst2Brush}" TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{Binding PatternsText}" FontSize="11.5"
-                               Foreground="{StaticResource Tekst3Brush}" TextTrimming="CharacterEllipsis" />
+                               Foreground="{DynamicResource Tekst3Brush}" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
             </Border>
             <HierarchicalDataTemplate.Triggers>
                 <DataTrigger Binding="{Binding IsMatch}" Value="True">
-                    <Setter TargetName="Poklapanje" Property="Background" Value="#1FFFFFFF" />
-                    <Setter TargetName="Poklapanje" Property="BorderBrush" Value="{StaticResource AkcenatBrush}" />
+                    <Setter TargetName="Poklapanje" Property="Background" Value="{DynamicResource IstaknutaStavkaBrush}" />
+                    <Setter TargetName="Poklapanje" Property="BorderBrush" Value="{DynamicResource AkcenatBrush}" />
                 </DataTrigger>
             </HierarchicalDataTemplate.Triggers>
         </HierarchicalDataTemplate>
@@ -254,8 +254,8 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Glavni prozor -->
-                        <Border Grid.Column="0" Background="{StaticResource Panel2Brush}"
-                                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1"
+                        <Border Grid.Column="0" Background="{DynamicResource Panel2Brush}"
+                                BorderBrush="{DynamicResource IvicaBrush}" BorderThickness="1"
                                 CornerRadius="10" Padding="14,12" Margin="0,0,8,0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -274,7 +274,7 @@
 
                                 <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Glavni prozor"
                                            FontSize="14" FontWeight="SemiBold"
-                                           Foreground="{StaticResource BelaBrush}" Margin="0,0,0,8" />
+                                           Foreground="{DynamicResource TekstJakBrush}" Margin="0,0,0,8" />
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Stanje:" Style="{StaticResource NazivStyle}" />
                                 <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding MainStatusText}"
@@ -297,14 +297,14 @@
                                            ToolTip="{Binding MainFrameworkText}" Style="{StaticResource VrednostStyle}" />
 
                                 <TextBlock Grid.Row="6" Grid.ColumnSpan="2" Text="{Binding MainNote}"
-                                           FontSize="11.5" Foreground="{StaticResource Tekst3Brush}"
+                                           FontSize="11.5" Foreground="{DynamicResource Tekst3Brush}"
                                            TextWrapping="Wrap" Margin="0,4,0,0" />
                             </Grid>
                         </Border>
 
                         <!-- Prozor Edit -->
-                        <Border Grid.Column="1" Background="{StaticResource Panel2Brush}"
-                                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1"
+                        <Border Grid.Column="1" Background="{DynamicResource Panel2Brush}"
+                                BorderBrush="{DynamicResource IvicaBrush}" BorderThickness="1"
                                 CornerRadius="10" Padding="14,12" Margin="8,0,0,0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -323,7 +323,7 @@
 
                                 <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Prozor „Edit“"
                                            FontSize="14" FontWeight="SemiBold"
-                                           Foreground="{StaticResource BelaBrush}" Margin="0,0,0,8" />
+                                           Foreground="{DynamicResource TekstJakBrush}" Margin="0,0,0,8" />
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Stanje:" Style="{StaticResource NazivStyle}" />
                                 <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding EditStatusText}"
@@ -346,14 +346,14 @@
                                            ToolTip="{Binding EditFrameworkText}" Style="{StaticResource VrednostStyle}" />
 
                                 <TextBlock Grid.Row="6" Grid.ColumnSpan="2" Text="{Binding EditNote}"
-                                           FontSize="11.5" Foreground="{StaticResource Tekst3Brush}"
+                                           FontSize="11.5" Foreground="{DynamicResource Tekst3Brush}"
                                            TextWrapping="Wrap" Margin="0,4,0,0" />
                             </Grid>
                         </Border>
                     </Grid>
 
                     <!-- Verzija i prekidači bezbednosti -->
-                    <Border BorderBrush="{StaticResource IvicaBrush}" BorderThickness="0,1,0,0" Padding="16,12">
+                    <Border BorderBrush="{DynamicResource IvicaBrush}" BorderThickness="0,1,0,0" Padding="16,12">
                         <WrapPanel Orientation="Horizontal">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
                                 <TextBlock Text="Verzija:" Style="{StaticResource StatusLabelStyle}" Margin="0,0,8,0" />
@@ -362,8 +362,8 @@
                             </StackPanel>
 
                             <!-- Znak upozorenja kad verzija nije ona na kojoj je strana rađena. -->
-                            <Border Background="{StaticResource WarningBackBrush}"
-                                    BorderBrush="{StaticResource WarningBorderBrush}"
+                            <Border Background="{DynamicResource WarningBackBrush}"
+                                    BorderBrush="{DynamicResource WarningBorderBrush}"
                                     BorderThickness="1" CornerRadius="999" Padding="12,5"
                                     VerticalAlignment="Center" Margin="0,0,20,0">
                                 <Border.Style>
@@ -377,7 +377,7 @@
                                     </Style>
                                 </Border.Style>
                                 <TextBlock Text="{Binding VersionWarningText}" FontSize="12.5" FontWeight="SemiBold"
-                                           Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" />
+                                           Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" />
                             </Border>
 
                             <CheckBox Content="Samo čitanje" IsChecked="{Binding ReadOnlyMode}"
@@ -442,7 +442,7 @@
                         Radi nad već obiđenim drvetom: nijedno filtriranje ne dira UIA, pa je i
                         kucanje u polju odmah vidljivo.
                     -->
-                    <Border DockPanel.Dock="Top" BorderBrush="{StaticResource IvicaBrush}"
+                    <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource IvicaBrush}"
                             BorderThickness="0,0,0,1" Padding="16,12">
                         <StackPanel>
                             <WrapPanel>
@@ -475,7 +475,7 @@
                     </Border>
 
                     <!-- Radnje nad izabranim čvorom -->
-                    <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource IvicaBrush}"
+                    <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource IvicaBrush}"
                             BorderThickness="0,1,0,0" Padding="16,12">
                         <StackPanel>
                             <TextBlock Style="{StaticResource StatusLabelStyle}" Margin="0,0,0,8"
@@ -501,7 +501,7 @@
                         Za izabrani čvor, odnosno za element uhvaćen tasterom F8: od prozora
                         nadole, sa istim podacima na svakom nivou.
                     -->
-                    <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource IvicaBrush}"
+                    <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource IvicaBrush}"
                             BorderThickness="0,1,0,0" Padding="16,12"
                             Visibility="{Binding HasChain, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
@@ -516,10 +516,10 @@
                                             <StackPanel Margin="0,0,0,4">
                                                 <TextBlock Text="{Binding Header}" FontSize="12.5"
                                                            FontFamily="Consolas" FontWeight="SemiBold"
-                                                           Foreground="{StaticResource TekstBrush}" />
+                                                           Foreground="{DynamicResource TekstBrush}" />
                                                 <TextBlock Text="{Binding Details}" FontSize="11.5"
                                                            FontFamily="Consolas"
-                                                           Foreground="{StaticResource Tekst3Brush}" />
+                                                           Foreground="{DynamicResource Tekst3Brush}" />
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

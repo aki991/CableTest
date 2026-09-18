@@ -74,7 +74,7 @@ public sealed class TestingViewModelTests : IDisposable
         TestingViewModel vm = Start();
 
         Assert.Equal(OutcomeState.Waiting, vm.Outcome);
-        Assert.Equal("ČEKA SE REZULTAT", vm.OutcomeText);
+        Assert.Equal(TestingViewModel.WaitingText, vm.OutcomeText);
         Assert.True(vm.IsWaiting);
         Assert.False(vm.HasResult);
         Assert.False(vm.MeasurementCardCommand.CanExecute(null));
@@ -91,7 +91,7 @@ public sealed class TestingViewModelTests : IDisposable
         Assert.Equal("PROŠAO", vm.OutcomeText);
         Assert.Equal("KABL JE ISPRAVAN", vm.OutcomeSubText);
         Assert.True(vm.HasResult);
-        Assert.Contains("40-W1.1", vm.ResultCableText, StringComparison.Ordinal);
+        Assert.Contains("M40-W1.1", vm.ResultCableText, StringComparison.Ordinal);
         Assert.Equal("Miloš", vm.ResultOperatorText);
         Assert.True(vm.MeasurementCardCommand.CanExecute(null));
     }
@@ -108,7 +108,7 @@ public sealed class TestingViewModelTests : IDisposable
         _gateway.ReceiveBackfillPass(Kabl());
 
         Assert.Equal(OutcomeState.Waiting, vm.Outcome);
-        Assert.Equal("ČEKA SE REZULTAT", vm.OutcomeText);
+        Assert.Equal(TestingViewModel.WaitingText, vm.OutcomeText);
         Assert.False(vm.HasResult);
         Assert.False(vm.MeasurementCardCommand.CanExecute(null));
 
@@ -199,9 +199,10 @@ public sealed class TestingViewModelTests : IDisposable
 
         // Vozilo „Miloš Veliki“ ima dvanaest kablova sa crteža, redom po stranama crteža.
         vm.SelectedVehicle = vm.Vehicles.First(v => v.Name == "Miloš Veliki");
-        Assert.Equal(12, vm.Cables.Count);
-        Assert.Equal("40-W1.1", vm.Cables.First().Code);
-        Assert.Equal("40-W5", vm.Cables.Last().Code);
+        Assert.Equal(55, vm.Cables.Count);
+        Assert.Contains(vm.Cables, c => c.Code == "M40-W1.1");
+        Assert.Contains(vm.Cables, c => c.Code == "M96-W2.2");
+        Assert.Equal(7, vm.Cables.Select(c => c.Group).Distinct().Count());
 
         vm.SelectedVehicle = vm.Vehicles.First(v => v.Id == drugo.Id);
         Assert.Equal(new[] { "G100-W1", "G100-W2" }, vm.Cables.Select(c => c.Code));
@@ -214,7 +215,7 @@ public sealed class TestingViewModelTests : IDisposable
         TestingViewModel vm = Start();
 
         // Pri pokretanju se bira prvo vozilo iz kataloga i njegov prvi kabl.
-        Assert.Equal("40-W1.1", vm.SelectedCable!.Code);
+        Assert.Equal("M26-W1", vm.SelectedCable!.Code);
         Assert.Equal(vm.SelectedCable.Nets.Count, vm.Nets.Count);
         Assert.StartsWith("1. ", vm.Nets.First(), StringComparison.Ordinal);
         Assert.EndsWith(vm.SelectedCable.Nets[0].Points, vm.Nets.First(), StringComparison.Ordinal);
@@ -359,7 +360,11 @@ public sealed class TestingViewModelTests : IDisposable
     {
         TestingViewModel vm = Start();
 
-        // Tačke pripadaju izabranom kablu: A01 je DIN:1, A02 je DIN:2.
+        // Ishod se upisuje uz netove samo kad je prikazani rezultat baš izabranog kabla, pa se
+        // kabl bira izričito — katalog ima 55 kablova i prvi u spisku nije ovaj.
+        vm.SelectedCable = vm.Cables.First(c => c.SpecFileName == "M40W1-1");
+
+        // Tačke pripadaju izabranom kablu: A01 i A02 su njegova prva dva terminala.
         _gateway.ReceiveFail(Kabl(), "SHORT A01-A02");
 
         Assert.Equal(OutcomeState.Fail, vm.Outcome);
@@ -387,10 +392,11 @@ public sealed class TestingViewModelTests : IDisposable
     {
         TestingViewModel vm = Start();
 
-        vm.SelectedCable = vm.Cables.First(c => c.SpecFileName == "40W2");
+        vm.SelectedCable = vm.Cables.First(c => c.SpecFileName == "M40W2");
         _gateway.ReceiveFail(vm.SelectedCable!, "OPEN A02-B01");
 
-        Assert.Equal("Prekid: DIN:2 → 10XB:16, žica BR (A02–B01)", Assert.Single(vm.ResultDefects));
+        // Kod =M40-W2 su A02 i B01 krajevi iste žice: pin 1 konektora DIN 72585 i pin P u XM6.
+        Assert.Equal("Prekid: 1 → P (A02–B01)", Assert.Single(vm.ResultDefects));
     }
 
     /// <summary>Tačka koje nema u priključnoj tabeli ostaje prikazana onakva kakva je.</summary>
@@ -413,23 +419,23 @@ public sealed class TestingViewModelTests : IDisposable
     {
         TestingViewModel vm = Start();
 
-        vm.SelectedCable = vm.Cables.First(c => c.SpecFileName == "40W5");
+        vm.SelectedCable = vm.Cables.First(c => c.SpecFileName == "M40W5");
 
-        Assert.Equal("=40-W5", vm.SelectedDesignationText);
-        Assert.Equal("Snop FLRY 6x1 mm²", vm.SelectedCableTypeText);
-        Assert.Equal("2 m", vm.SelectedLengthText);
-        Assert.Equal("40_grupa_2_0.pdf, strana 12", vm.SelectedSourceText);
+        Assert.Equal("=M40-W5", vm.SelectedDesignationText);
+        Assert.Equal("Snop FLRY 9 x 0,75mm2", vm.SelectedCableTypeText);
+        Assert.Equal("0,8 m", vm.SelectedLengthText);
+        Assert.Equal("Gr.40 Miloš Veliki  Prelazni.pdf, strana 13", vm.SelectedSourceText);
 
         Assert.True(vm.HasWires);
-        Assert.Equal(9, vm.Wires.Count);
+        Assert.Equal(12, vm.Wires.Count);
         Assert.Equal("BR", vm.Wires[0].Color);
-        Assert.Equal("1 mm²", vm.Wires[0].CrossSectionText);
-        Assert.Equal("10XC:30", vm.Wires[0].FromTerminal);
-        Assert.Equal("BUK-BR", vm.Wires[0].ToTerminal);
+        Assert.Equal("0,75 mm²", vm.Wires[0].CrossSectionText);
+        Assert.Equal("1", vm.Wires[0].FromTerminal);
+        Assert.Equal("B09", vm.Wires[0].ToTerminal);
 
-        // Ispod tabele provodnika stoje izvedeni netovi — ono što zaista ide u tester.
-        Assert.Equal(6, vm.Nets.Count);
-        Assert.Equal("6. C06-D06-D07-D08-D09", vm.Nets[^1]);
+        // Ispod tabele provodnika stoje izvedene veze — ono što zaista ide u tester.
+        Assert.Equal(12, vm.Nets.Count);
+        Assert.Equal("12. A12-B12", vm.Nets[^1]);
     }
 
     /// <summary>
@@ -442,7 +448,7 @@ public sealed class TestingViewModelTests : IDisposable
         _settings.DemoMode = true;
         TestingViewModel vm = Start();
 
-        vm.SelectedCable = vm.Cables.First(c => c.SpecFileName == "40W2");
+        vm.SelectedCable = vm.Cables.First(c => c.SpecFileName == "M40W2");
         Assert.True(vm.CanSimulate);
 
         vm.SimulateFailCommand.Execute(null);
@@ -451,8 +457,8 @@ public sealed class TestingViewModelTests : IDisposable
         Assert.Equal(
             new[]
             {
-                "Prekid: DIN:2 → 10XB:16, žica BR (A02–B01)",
-                "Kratak spoj: DIN:2 → DIN:1 (A02–A01)"
+                "Prekid: 2 → P, žica BR (A01–B01)",
+                "Kratak spoj: 2 → 1 (A01–A02)"
             },
             vm.ResultDefects);
     }
@@ -679,7 +685,7 @@ public sealed class TestingViewModelTests : IDisposable
         return _viewModel;
     }
 
-    private Cable Kabl() => _cables.GetBySpecFileName("40W1-1")!;
+    private Cable Kabl() => _cables.GetBySpecFileName("M40W1-1")!;
 
     private Vehicle DodajVozilo(string ime, params (string Code, string Spec)[] kablovi)
     {

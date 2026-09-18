@@ -64,6 +64,10 @@ public partial class App : Application
             settings.DemoMode = true;
         }
 
+        // Tema se postavlja pre nego što se napravi prozor: promena posle toga je zamena
+        // rečnika boja i preračunavanje celog ekrana, a pri pokretanju se to vidi kao treptaj.
+        ThemeService.Apply(settings.Theme);
+
         CableTestDatabase database = OpenDatabase(settings.DemoMode);
 
         var cables = new SqliteCableRepository(database);
@@ -90,7 +94,8 @@ public partial class App : Application
             new HistoryViewModel(runs, cables),
             new CableConnectorViewModel(new MessageBoxConfirmation()),
             settings,
-            store);
+            store,
+            ThemeService.Apply);
 
         MainWindow = new MainWindow(shell);
         MainWindow.Show();

@@ -14,16 +14,23 @@ public sealed class ShellViewModel : ObservableObject, IDisposable
 {
     private readonly AppSettings _settings;
     private readonly SettingsStore _store;
+    private readonly Action<AppTheme> _theme;
 
     private string? _settingsError;
 
+    /// <param name="applyTheme">
+    /// Šta da se uradi kad se promeni tema. Stiže kao delegat, a ne kao poziv WPF-a odavde:
+    /// ViewModel ne sme da zna za <c>Application.Resources</c>, inače se više ne može ispitati
+    /// bez pokrenute aplikacije.
+    /// </param>
     public ShellViewModel(
         TestingViewModel testing,
         CatalogViewModel catalog,
         HistoryViewModel history,
         CableConnectorViewModel cableConnector,
         AppSettings settings,
-        SettingsStore store)
+        SettingsStore store,
+        Action<AppTheme> applyTheme)
     {
         ArgumentNullException.ThrowIfNull(testing);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -31,6 +38,7 @@ public sealed class ShellViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(cableConnector);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(store);
+        ArgumentNullException.ThrowIfNull(applyTheme);
 
         Testing = testing;
         Catalog = catalog;
@@ -38,6 +46,7 @@ public sealed class ShellViewModel : ObservableObject, IDisposable
         CableConnector = cableConnector;
         _settings = settings;
         _store = store;
+        _theme = applyTheme;
 
         // Svaki rezultat koji uđe u istoriju menja i brojače u podnožju i spisak u Istoriji.
         Testing.RunImported += OnRunImported;
@@ -84,6 +93,38 @@ public sealed class ShellViewModel : ObservableObject, IDisposable
 
     private void SaveSettings()
         => SettingsError = _store.Save(_settings) ? null : _store.LastError;
+
+    /// <summary>Teme koje se nude u Podešavanjima.</summary>
+    public IReadOnlyList<AppTheme> Themes { get; } = new[] { AppTheme.Dark, AppTheme.Light };
+
+    /// <summary>
+    /// Izabrana tema.
+    /// </summary>
+    /// <remarks>
+    /// Kao i razvojni prekidač, važi odmah i odmah se pamti: operater bira temu prema svetlu
+    /// nad svojim stolom, a to se menja u toku smene — čekanje na ponovno pokretanje bi značilo
+    /// da se ne menja nikad.
+    /// </remarks>
+    public AppTheme Theme
+    {
+        get => _settings.Theme;
+        set
+        {
+            if (_settings.Theme == value)
+            {
+                return;
+            }
+
+            _settings.Theme = value;
+            _theme(value);
+            Raise();
+            Raise(nameof(ThemeText));
+            SaveSettings();
+        }
+    }
+
+    /// <summary>Tema rečena operateru, a ne imenom iz koda.</summary>
+    public string ThemeText => Theme == AppTheme.Light ? "svetla" : "tamna";
 
     /// <summary>
     /// Da li se u Podešavanjima uopšte nudi izbor izvora rezultata.

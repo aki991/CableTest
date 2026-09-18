@@ -41,11 +41,11 @@ public sealed class DatabaseTests : IDisposable
         }
     }
 
-    /// <summary>Koliko kablova ima katalog posle migracije 004 — dvanaest sa crteža =40.</summary>
-    private const int KatalogKablova = 12;
+    /// <summary>Koliko kablova katalog ima posle svih migracija; migracija 005 ih uvodi 55.</summary>
+    private const int KatalogKablova = 55;
 
     /// <summary>Kabl na kome se u ovim testovima proverava rad sa katalogom.</summary>
-    private const string OgledniKabl = "40W1-1";
+    private const string OgledniKabl = "M40W1-1";
 
     /// <summary>Ukupan broj netova u bazi.</summary>
     private long BrojNetova() => BrojRedova("Net");
@@ -137,10 +137,9 @@ public sealed class DatabaseTests : IDisposable
         string[] milos = kablovi.GetByVehicle(vozilo.Id).Select(c => c.Code).ToArray();
 
         Assert.Equal(KatalogKablova, milos.Length);
-        Assert.Equal("40-W1.1", milos[0]);
-        Assert.Equal("40-W1.2", milos[1]);
-        Assert.Equal("40-W2", milos[6]);
-        Assert.Equal("40-W5", milos[^1]);
+        Assert.Contains("M26-W1", milos);
+        Assert.Contains("M40-W1.1", milos);
+        Assert.Contains("M96-W2.2", milos);
         Assert.Equal(KatalogKablova, kablovi.GetAll().Count);
     }
 
@@ -173,8 +172,8 @@ public sealed class DatabaseTests : IDisposable
         var repository = new SqliteCableRepository(_database);
 
         Assert.NotNull(repository.GetBySpecFileName(OgledniKabl));
-        Assert.NotNull(repository.GetBySpecFileName("40w1-1"));
-        Assert.NotNull(repository.GetBySpecFileName("40W1-1.c61"));
+        Assert.NotNull(repository.GetBySpecFileName("m40w1-1"));
+        Assert.NotNull(repository.GetBySpecFileName("M40W1-1.c61"));
         Assert.Null(repository.GetBySpecFileName("NEMA-GA"));
         Assert.Null(repository.GetBySpecFileName(null));
     }
@@ -526,8 +525,8 @@ public sealed class DatabaseTests : IDisposable
         const string crLf = "\r\n";
         string csv =
             "Seq.,Filename,Pass,Date,Time,Lots,Barcode1,Operater,STEP 1,O/S TEST,unit," + crLf +
-            "1,40W1-1,pass,2026/09/07,11:44:11,,,Miloš,PASS,PASS," + crLf +
-            "2,40W1-1,fail,2026/09/07,11:47:34,,,Miloš,FAIL,SHORT O01-O02;FAIL," + crLf;
+            "1,M40W1-1,pass,2026/09/07,11:44:11,,,Miloš,PASS,PASS," + crLf +
+            "2,M40W1-1,fail,2026/09/07,11:47:34,,,Miloš,FAIL,SHORT O01-O02;FAIL," + crLf;
 
         var cables = new SqliteCableRepository(_database);
         var runs = new SqliteTestRunRepository(_database);

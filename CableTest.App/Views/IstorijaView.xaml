@@ -24,69 +24,69 @@
 
         <!-- ================= PLOČICE ================= -->
         <UniformGrid Grid.Row="1" Rows="1" Margin="0,0,0,18">
-            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource IvicaBrush}"
+            <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource IvicaBrush}"
                     BorderThickness="1" CornerRadius="12" Padding="20,18" Margin="0,0,16,0">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaIstorija}"
-                              Width="21" Height="21" Stroke="{StaticResource AkcenatJakBrush}"
+                              Width="21" Height="21" Stroke="{DynamicResource AkcenatJakBrush}"
                               VerticalAlignment="Center" Margin="0,0,11,0" />
                         <TextBlock Text="Danas" FontSize="18" FontWeight="SemiBold"
-                                   Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                                   Foreground="{DynamicResource TekstJakBrush}" VerticalAlignment="Center" />
                     </StackPanel>
                     <TextBlock Text="{Binding TodayTotal}" FontSize="30" FontWeight="Bold"
-                               Foreground="{StaticResource AkcenatJakBrush}" Margin="0,12,0,0" />
+                               Foreground="{DynamicResource AkcenatJakBrush}" Margin="0,12,0,0" />
                     <TextBlock Text="izvršenih testova" FontSize="13.5"
-                               Foreground="{StaticResource Tekst2Brush}" Margin="0,3,0,0" />
+                               Foreground="{DynamicResource Tekst2Brush}" Margin="0,3,0,0" />
                 </StackPanel>
             </Border>
 
-            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource IvicaBrush}"
+            <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource IvicaBrush}"
                     BorderThickness="1" CornerRadius="12" Padding="20,18" Margin="0,0,16,0">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaKrugPotvrda}"
-                              Width="21" Height="21" Stroke="{StaticResource PassBrush}"
+                              Width="21" Height="21" Stroke="{DynamicResource PassBrush}"
                               VerticalAlignment="Center" Margin="0,0,11,0" />
                         <TextBlock Text="Prošlo" FontSize="18" FontWeight="SemiBold"
-                                   Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                                   Foreground="{DynamicResource TekstJakBrush}" VerticalAlignment="Center" />
                     </StackPanel>
                     <TextBlock Text="{Binding TodayPassed}" FontSize="30" FontWeight="Bold"
-                               Foreground="{StaticResource PassBrush}" Margin="0,12,0,0" />
+                               Foreground="{DynamicResource PassBrush}" Margin="0,12,0,0" />
                     <TextBlock Text="danas" FontSize="13.5"
-                               Foreground="{StaticResource Tekst2Brush}" Margin="0,3,0,0" />
+                               Foreground="{DynamicResource Tekst2Brush}" Margin="0,3,0,0" />
                 </StackPanel>
             </Border>
 
-            <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource IvicaBrush}"
+            <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource IvicaBrush}"
                     BorderThickness="1" CornerRadius="12" Padding="20,18">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Path Style="{StaticResource IkonaStyle}" Data="{StaticResource IkonaUzvicnik}"
-                              Width="21" Height="21" Stroke="{StaticResource FailBrush}"
+                              Width="21" Height="21" Stroke="{DynamicResource FailBrush}"
                               VerticalAlignment="Center" Margin="0,0,11,0" />
                         <TextBlock Text="Palo" FontSize="18" FontWeight="SemiBold"
-                                   Foreground="{StaticResource BelaBrush}" VerticalAlignment="Center" />
+                                   Foreground="{DynamicResource TekstJakBrush}" VerticalAlignment="Center" />
                     </StackPanel>
                     <TextBlock Text="{Binding TodayFailed}" FontSize="30" FontWeight="Bold"
-                               Foreground="{StaticResource FailBrush}" Margin="0,12,0,0" />
+                               Foreground="{DynamicResource FailBrush}" Margin="0,12,0,0" />
                     <TextBlock Text="danas" FontSize="13.5"
-                               Foreground="{StaticResource Tekst2Brush}" Margin="0,3,0,0" />
+                               Foreground="{DynamicResource Tekst2Brush}" Margin="0,3,0,0" />
                 </StackPanel>
             </Border>
         </UniformGrid>
 
         <!-- ================= TABELA ================= -->
-        <Border Grid.Row="2" Background="{StaticResource PanelBrush}"
-                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1"
+        <Border Grid.Row="2" Background="{DynamicResource PanelBrush}"
+                BorderBrush="{DynamicResource IvicaBrush}" BorderThickness="1"
                 CornerRadius="12" Padding="20,18,20,20">
             <DockPanel>
                 <TextBlock DockPanel.Dock="Top" Text="Izvršeni testovi" Style="{StaticResource SectionTitleStyle}" />
 
-                <Border BorderBrush="{StaticResource IvicaBrush}" BorderThickness="1" CornerRadius="10">
+                <Border BorderBrush="{DynamicResource IvicaBrush}" BorderThickness="1" CornerRadius="10">
                     <DockPanel>
-                        <Border DockPanel.Dock="Top" Background="{StaticResource Panel3Brush}"
-                                BorderBrush="{StaticResource IvicaBrush}" BorderThickness="0,0,0,1"
+                        <Border DockPanel.Dock="Top" Background="{DynamicResource Panel3Brush}"
+                                BorderBrush="{DynamicResource IvicaBrush}" BorderThickness="0,0,0,1"
                                 CornerRadius="10,10,0,0" Padding="14,11">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -112,7 +112,7 @@
 
                         <Grid>
                             <TextBlock Text="Istorija je prazna — nijedan rezultat još nije stigao sa testera."
-                                       Foreground="{StaticResource Tekst3Brush}" FontSize="14"
+                                       Foreground="{DynamicResource Tekst3Brush}" FontSize="14"
                                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20"
                                        Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" />
 
@@ -120,7 +120,7 @@
                                 <ItemsControl ItemsSource="{Binding Rows}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border BorderBrush="#26FFFFFF" BorderThickness="0,0,0,1"
+                                            <Border BorderBrush="{DynamicResource RedIvicaBrush}" BorderThickness="0,0,0,1"
                                                     Padding="14,11" ToolTip="{Binding RawRow}">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
@@ -156,11 +156,11 @@
                                                             <Path.Style>
                                                                 <Style TargetType="Path">
                                                                     <Setter Property="Data" Value="{StaticResource IkonaUzvicnik}" />
-                                                                    <Setter Property="Stroke" Value="{StaticResource FailBrush}" />
+                                                                    <Setter Property="Stroke" Value="{DynamicResource FailBrush}" />
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding Passed}" Value="True">
                                                                             <Setter Property="Data" Value="{StaticResource IkonaKrugPotvrda}" />
-                                                                            <Setter Property="Stroke" Value="{StaticResource PassBrush}" />
+                                                                            <Setter Property="Stroke" Value="{DynamicResource PassBrush}" />
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
@@ -171,10 +171,10 @@
                                                                    FontWeight="SemiBold" VerticalAlignment="Center">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="{StaticResource FailBrush}" />
+                                                                    <Setter Property="Foreground" Value="{DynamicResource FailBrush}" />
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding Passed}" Value="True">
-                                                                            <Setter Property="Foreground" Value="{StaticResource PassBrush}" />
+                                                                            <Setter Property="Foreground" Value="{DynamicResource PassBrush}" />
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>

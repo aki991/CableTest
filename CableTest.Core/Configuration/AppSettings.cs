@@ -13,6 +13,22 @@ public enum ResultSource
     Simulation
 }
 
+/// <summary>Izgled aplikacije.</summary>
+public enum AppTheme
+{
+    /// <summary>
+    /// Tamna („radionička") tema. Podrazumevana: ekran stoji iznad ispitnog stola i gleda se
+    /// ceo radni dan, pa tamna podloga manje zamara i ne pravi odsjaj.
+    /// </summary>
+    Dark,
+
+    /// <summary>
+    /// Svetla tema. Za sto uz prozor ili pod jakim plafonskim svetlom, gde tamna podloga
+    /// postaje ogledalo.
+    /// </summary>
+    Light
+}
+
 /// <summary>
 /// Podešavanja aplikacije, onakva kakva stoje u <c>%APPDATA%\CableTest\settings.json</c>.
 /// </summary>
@@ -78,6 +94,15 @@ public sealed class AppSettings
     /// <summary>Folder sa pripremljenim CSV fajlovima za simulaciju; prazno znači bez fajlova.</summary>
     public string SimulationFolder { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Tamna ili svetla tema.
+    /// </summary>
+    /// <remarks>
+    /// Menja se u Podešavanjima i važi odmah, bez ponovnog pokretanja — operater temu bira
+    /// prema svetlu nad svojim stolom, a ne prema tome kad mu se da da ugasi program.
+    /// </remarks>
+    public AppTheme Theme { get; set; } = AppTheme.Dark;
+
     /// <summary>Podrazumevana putanja rezultata.</summary>
     public const string DefaultResultPath = @"C:\Cable Linker8761";
 
@@ -111,7 +136,8 @@ public sealed class AppSettings
         ShowCableConnectorTool = ShowCableConnectorTool,
         ResultSource = ResultSource,
         ResultTimeoutSeconds = ResultTimeoutSeconds,
-        SimulationFolder = SimulationFolder
+        SimulationFolder = SimulationFolder,
+        Theme = Theme
     };
 
     /// <summary>Podešavanja pretvorena u ono što gateway očekuje.</summary>

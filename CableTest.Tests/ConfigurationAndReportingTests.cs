@@ -352,7 +352,7 @@ public sealed class ConfigurationAndReportingTests : IDisposable
             Id = 2,
             Code = "40-W2",
             Description = "Snop FLRY, DIN 72585 pod uglom",
-            SpecFileName = "40W2",
+            SpecFileName = "M40W2",
             Designation = "=40-W2",
             CableType = "Snop FLRY 2x0,75 mm²",
             LengthM = 5.9m,
@@ -380,7 +380,7 @@ public sealed class ConfigurationAndReportingTests : IDisposable
         var run = new TestRun
         {
             Seq = 3,
-            SpecFileName = "40W2",
+            SpecFileName = "M40W2",
             Passed = false,
             TestedAt = new DateTime(2026, 9, 7, 11, 47, 34),
             Operator = "Miloš"

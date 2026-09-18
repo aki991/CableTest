@@ -12,20 +12,33 @@ public sealed record PortUsage(char Letter, bool Used, int PointCount)
         : $"Port {Letter} — kabl ga ne koristi";
 }
 
-/// <summary>Jedan red tabele netova: odakle, dokle i sa kakvim ishodom.</summary>
-/// <param name="Ordinal">Redni broj neta.</param>
-/// <param name="From">Prva tačka neta.</param>
-/// <param name="To">Poslednja tačka neta.</param>
-/// <param name="Points">Ceo zapis neta.</param>
-/// <param name="PointCount">Broj tačaka u netu.</param>
+/// <summary>
+/// Jedan red net liste: <b>jedan kraj žice</b>, tj. jedna tačka testera.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Reč „net" ovde znači ono što znači operateru: jedan kraj provodnika. Žica sa dva kraja daje
+/// dva neta, pa ih je uvek dvaput više nego žica.
+/// </para>
+/// <para>
+/// U modelu i u .c61 fajlu <see cref="CableNet"/> znači nešto drugo — grupu međusobno spojenih
+/// tačaka („A01-B01"), jednu po žici. To se NE menja: tester traži baš takvu net listu, a
+/// program sa po jednom tačkom u netu tražio bi da su A01 i B01 razdvojeni i oborio bi ispravan
+/// kabl. Ovaj red je zato samo prikaz — jedan <see cref="CableNet"/> daje onoliko redova koliko
+/// ima tačaka, a svi nose isti <see cref="Connection"/> i isti ishod.
+/// </para>
+/// </remarks>
+/// <param name="Ordinal">Redni broj reda.</param>
+/// <param name="Point">Tačka testera tog kraja, npr. „A01".</param>
+/// <param name="Wire">Oznaka žice kojoj kraj pripada, npr. „BR"; „—" kad se ne zna.</param>
+/// <param name="Connection">Veza kojoj kraj pripada, npr. „A01-B01".</param>
 /// <param name="Status">„PROŠAO", „PAO" ili „—" dok rezultata nema.</param>
-/// <param name="Defect">Opis greške na tom netu; prazno ako greške nema.</param>
+/// <param name="Defect">Opis greške na toj vezi; prazno ako greške nema.</param>
 public sealed record NetRow(
     int Ordinal,
-    string From,
-    string To,
-    string Points,
-    int PointCount,
+    string Point,
+    string Wire,
+    string Connection,
     string Status,
     string Defect)
 {
@@ -42,8 +55,8 @@ public sealed record NetRow(
 
     public bool IsFailed => Status == Failed;
 
-    /// <summary>Tekst oblačića: greška ako je ima, inače ceo zapis neta.</summary>
-    public string Description => Defect.Length > 0 ? Defect : Points;
+    /// <summary>Tekst oblačića: greška ako je ima, inače cela veza kojoj kraj pripada.</summary>
+    public string Description => Defect.Length > 0 ? Defect : Connection;
 }
 
 /// <summary>
@@ -173,7 +186,8 @@ public static class CableLayout
             }
         }
 
-        var rows = new List<NetRow>(cable.Nets.Count);
+        var rows = new List<NetRow>();
+        int ordinal = 0;
 
         foreach (CableNet net in cable.Nets.OrderBy(n => n.Ordinal))
         {
@@ -189,20 +203,48 @@ public static class CableLayout
                 }
             }
 
+            // Ishod tester javlja po VEZI, ne po kraju — oba kraja iste veze nose isto stanje.
             string status = !sameCable
                 ? NetRow.Unknown
                 : defect.Length > 0 ? NetRow.Failed : NetRow.Passed;
 
-            rows.Add(new NetRow(
-                net.Ordinal,
-                points.Length > 0 ? points[0] : NetRow.Unknown,
-                points.Length > 1 ? points[^1] : NetRow.Unknown,
-                net.Points,
-                points.Length,
-                status,
-                defect));
+            if (points.Length == 0)
+            {
+                // Net bez ijedne tačke ne bi trebalo da postoji, ali ako se nađe u starijem
+                // zapisu, mora da se vidi. Prećutno izostavljen red značio bi net koji niko ne
+                // ispituje, a niko i ne primećuje da nedostaje.
+                rows.Add(new NetRow(++ordinal, NetRow.Unknown, NetRow.Unknown, net.Points, status, defect));
+                continue;
+            }
+
+            foreach (string point in points)
+            {
+                rows.Add(new NetRow(++ordinal, point, WireOf(cable, point), net.Points, status, defect));
+            }
         }
 
         return rows;
+    }
+
+    /// <summary>
+    /// Oznaka žice čiji je kraj na zadatoj tački testera; „—" kad se ne zna.
+    /// </summary>
+    /// <remarks>
+    /// Put je tačka → terminal → provodnik: priključna tabela kaže koji terminal ide na koju
+    /// tačku, a ožičenje koji provodnik dodiruje taj terminal. Za starije kablove bez ožičenja
+    /// nema šta da se nađe, pa ostaje „—".
+    /// </remarks>
+    private static string WireOf(Cable cable, string point)
+    {
+        CableTerminal? terminal = cable.FindTerminalByPoint(point);
+
+        if (terminal is null)
+        {
+            return NetRow.Unknown;
+        }
+
+        CableWire? wire = cable.FindWireOfTerminal(terminal.Label);
+
+        return string.IsNullOrWhiteSpace(wire?.Color) ? NetRow.Unknown : wire!.Color;
     }
 }

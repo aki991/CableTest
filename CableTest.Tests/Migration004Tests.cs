@@ -32,6 +32,15 @@ public sealed class Migration004Tests : IDisposable
         Directory.CreateDirectory(_folder);
     }
 
+    /// <summary>
+    /// Koliko kablova ima posle SVIH migracija, a ne samo posle 004.
+    /// </summary>
+    /// <remarks>
+    /// Ovi testovi puste ceo niz migracija, pa mere krajnje stanje. Migracija 005 uvodi kablove
+    /// sa novih crteža i sklanja grupu 40 sa starog; broj se zato drži ovde, na jednom mestu.
+    /// </remarks>
+    private const int KablovaPosleSvihMigracija = 55;
+
     public void Dispose()
     {
         SqliteConnection.ClearAllPools();
@@ -114,10 +123,14 @@ public sealed class Migration004Tests : IDisposable
         database.Migrate();
 
         var cables = new SqliteCableRepository(database);
-        Cable cable = cables.GetBySpecFileName("40W1-1")!;
 
-        Assert.Equal("=40-W1.1", cable.Designation);
+        // Migracija 005 je u međuvremenu sklonila grupu 40 sa starijeg crteža i uvela kablove
+        // sa novih; ovde se proverava da nadogradnja stigne do kraja i nad bazom sa istorijom.
+        Cable cable = cables.GetBySpecFileName("M40W1-1")!;
+
+        Assert.Equal("=M40-W1.1", cable.Designation);
         Assert.Equal(new[] { "A01-B01", "A02-B02" }, cable.Nets.Select(n => n.Points));
+        Assert.Null(cables.GetBySpecFileName("40W1-1"));
     }
 
     /// <summary>
@@ -146,7 +159,7 @@ public sealed class Migration004Tests : IDisposable
 
         Vehicle vehicle = vehicles.GetByName("Miloš Veliki")!;
         Assert.Equal(id, vehicle.Id);
-        Assert.Equal(12, new SqliteCableRepository(database).GetByVehicle(vehicle.Id).Count);
+        Assert.Equal(KablovaPosleSvihMigracija, new SqliteCableRepository(database).GetByVehicle(vehicle.Id).Count);
     }
 
     /// <summary>
@@ -200,7 +213,7 @@ public sealed class Migration004Tests : IDisposable
         Assert.Single(runs.GetByCable(cableId));
 
         // Aktivni ostaju samo kablovi sa crteža.
-        Assert.Equal(12, cables.GetByVehicle(vehicle.Id).Count);
+        Assert.Equal(KablovaPosleSvihMigracija, cables.GetByVehicle(vehicle.Id).Count);
     }
 
     /// <summary>Ponovno pokretanje migracija ne sme ništa da udvostruči.</summary>
@@ -212,12 +225,12 @@ public sealed class Migration004Tests : IDisposable
         database.Migrate();
 
         var cables = new SqliteCableRepository(database);
-        Cable cable = cables.GetBySpecFileName("40W5")!;
+        Cable cable = cables.GetBySpecFileName("M40W5")!;
 
-        Assert.Equal(12, cables.GetAll().Count);
-        Assert.Equal(15, cable.Terminals.Count);
-        Assert.Equal(9, cable.Wires.Count);
-        Assert.Equal(6, cable.Nets.Count);
+        Assert.Equal(KablovaPosleSvihMigracija, cables.GetAll().Count);
+        Assert.Equal(24, cable.Terminals.Count);
+        Assert.Equal(12, cable.Wires.Count);
+        Assert.Equal(12, cable.Nets.Count);
     }
 
     /// <summary>Demo baza ide kroz istu nadogradnju kao i prava.</summary>
@@ -230,8 +243,8 @@ public sealed class Migration004Tests : IDisposable
 
         var cables = new SqliteCableRepository(database);
 
-        Assert.Equal(12, cables.GetAll().Count);
-        Assert.NotNull(cables.GetBySpecFileName("40W5"));
+        Assert.Equal(KablovaPosleSvihMigracija, cables.GetAll().Count);
+        Assert.NotNull(cables.GetBySpecFileName("M40W5"));
     }
 
     // -------------------------------------------------------------------------------------
