@@ -281,8 +281,55 @@ public sealed class GrupeMilosVelikiTests : IDisposable
             .Split(C61Generator.LineEnding);
 
         Assert.Equal(
-            new[] { "OSNet=2", "OSNet:A01-B01", "OSNet:A02-B02" },
+            new[] { "OSNet=2", "OSNet:C01-D01", "OSNet:C02-D02" },
             spec.Where(l => l.StartsWith("OSNet", StringComparison.Ordinal)));
+    }
+
+    /// <summary>
+    /// =M40-W1.1 je prvi kabl prebačen na tačke konektora C i D (migracija 006).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Strana A ide u konektor C, strana B u konektor D, a svaka tačka se na adapteru ukrcava u
+    /// oba pina svog para. Dok su oba kraja stajala na konektorima A i B, net je izgledao
+    /// „A01-B01" — isti niz znakova kao par pinova jedne tačke. Ko ga pročita kao par, ukrca oba
+    /// kraja žice u jedan konektor: žica nije ispitana, a tester javlja „pass".
+    /// </para>
+    /// <para>
+    /// Ostali kablovi iz migracije 005 su još na starim tačkama — raspored se prvo proverava na
+    /// ovom kablu.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void M40W11_KrajeviSuNaKonektorimaCiD()
+    {
+        Cable c = Kabl("M40-W1.1");
+
+        Assert.Equal("C01", c.FindTerminal("1")!.TesterPoint);
+        Assert.Equal("C02", c.FindTerminal("2")!.TesterPoint);
+        Assert.Equal("D01", c.FindTerminal("A")!.TesterPoint);
+        Assert.Equal("D02", c.FindTerminal("B")!.TesterPoint);
+
+        // Svaka žica spaja dva RAZLIČITA konektora — inače kabl nije ni ispitan.
+        foreach (CableWire w in c.Wires)
+        {
+            TestPoint od = TestPoint.Parse(c.FindTerminal(w.FromTerminal)!.TesterPoint);
+            TestPoint doo = TestPoint.Parse(c.FindTerminal(w.ToTerminal)!.TesterPoint);
+
+            Assert.NotEqual(od.Connector, doo.Connector);
+        }
+    }
+
+    /// <summary>Pinovi tačke se ne unose — čitaju se iz same tačke, u njenom konektoru.</summary>
+    [Fact]
+    public void M40W11_SvakaTacka_ImaSvojParPinova()
+    {
+        Cable c = Kabl("M40-W1.1");
+
+        Assert.Equal("A01+B01", TestPoint.Parse(c.FindTerminal("1")!.TesterPoint).Pins);
+        Assert.Equal("A01+B01", TestPoint.Parse(c.FindTerminal("A")!.TesterPoint).Pins);
+        Assert.Equal("A02+B02", TestPoint.Parse(c.FindTerminal("2")!.TesterPoint).Pins);
+        Assert.Equal("A02+B02", TestPoint.Parse(c.FindTerminal("B")!.TesterPoint).Pins);
     }
 
     /// <summary>

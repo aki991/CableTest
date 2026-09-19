@@ -80,4 +80,55 @@ public class TestPointTests
         Assert.NotEqual(TestPoint.Parse("O01"), TestPoint.Parse("O02"));
         Assert.True(TestPoint.Parse("A01").CompareTo(TestPoint.Parse("B01")) < 0);
     }
+
+    // -----------------------------------------------------------------------------------
+    // Pinovi
+    // -----------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Tačku čini par pinova istog konektora, sa njenim brojem: „C05" → pinovi A05 i B05.
+    /// </summary>
+    /// <remarks>
+    /// Par se ne bira i ne unosi — sledi iz same tačke. Zato ovde nema ničega što bi neko mogao
+    /// da dodeli pogrešno.
+    /// </remarks>
+    [Theory]
+    [InlineData("C05", "A05", "B05")]
+    [InlineData("A01", "A01", "B01")]   // konektor A: tačka i prvi pin se pišu isto
+    [InlineData("P32", "A32", "B32")]
+    public void Tacku_CiniParPinovaIstogKonektora(string tacka, string pinA, string pinB)
+    {
+        TestPoint point = TestPoint.Parse(tacka);
+
+        Assert.Equal(pinA, point.PinA);
+        Assert.Equal(pinB, point.PinB);
+        Assert.Equal(pinA + "+" + pinB, point.Pins);
+    }
+
+    /// <summary>
+    /// Par pinova se piše plusom, a net crticom — da se dve oznake ne pobrkaju.
+    /// </summary>
+    /// <remarks>
+    /// Zamka je stvarna: „A01-B01" se čita i kao net između dve tačke i kao par pinova jedne
+    /// tačke. Ko ga pročita kao par, ukrca oba kraja žice u jedan konektor — žica nije ispitana,
+    /// a tester javlja „pass".
+    /// </remarks>
+    [Fact]
+    public void ParPinova_SePiseDrugacijeOdNeta()
+    {
+        Assert.Equal('+', TestPoint.PinSeparator);
+        Assert.NotEqual(Net.Separator, TestPoint.PinSeparator);
+        Assert.DoesNotContain(Net.Separator, TestPoint.Parse("A01").Pins);
+    }
+
+    /// <summary>Konektor je slovo oznake; broj tačke je uvek dvocifren.</summary>
+    [Fact]
+    public void Tacka_ZnaSvojKonektorIBroj()
+    {
+        TestPoint point = TestPoint.Parse("d7");
+
+        Assert.Equal('D', point.Connector);
+        Assert.Equal("07", point.NumberText);
+        Assert.Equal("Konektor D, tačka 07 — pinovi A07 i B07", point.Describe());
+    }
 }

@@ -14,11 +14,11 @@ namespace CableTest.Tests;
 /// <list type="bullet">
 /// <item>na ekranu — jedan KRAJ provodnika, pa žica sa dva kraja daje dva neta;</item>
 /// <item>u modelu i u .c61 fajlu (<see cref="CableNet"/>) — grupa međusobno spojenih tačaka
-/// („A01-B01"), jedna po žici.</item>
+/// („C01-D01"), jedna po žici.</item>
 /// </list>
 /// <para>
 /// Ovi testovi drže oba značenja na mestu. Najvažniji je onaj poslednji: .c61 mora da ostane
-/// nepromenjen. Program sa po jednom tačkom u netu tražio bi da su A01 i B01 razdvojeni i
+/// nepromenjen. Program sa po jednom tačkom u netu tražio bi da su C01 i D01 razdvojeni i
 /// oborio bi ispravan kabl.
 /// </para>
 /// </remarks>
@@ -35,7 +35,7 @@ public class NetListaTests
         IReadOnlyList<NetRow> rows = CableLayout.NetRows(DvozilniKabl(), run: null, runCable: null);
 
         Assert.Equal(4, rows.Count);
-        Assert.Equal(new[] { "A01", "B01", "A02", "B02" }, rows.Select(r => r.Point));
+        Assert.Equal(new[] { "C01", "D01", "C02", "D02" }, rows.Select(r => r.Point));
         Assert.Equal(new[] { 1, 2, 3, 4 }, rows.Select(r => r.Ordinal));
     }
 
@@ -45,10 +45,10 @@ public class NetListaTests
     {
         IReadOnlyList<NetRow> rows = CableLayout.NetRows(DvozilniKabl(), run: null, runCable: null);
 
-        Assert.Equal("A01-B01", rows[0].Connection);
-        Assert.Equal("A01-B01", rows[1].Connection);
-        Assert.Equal("A02-B02", rows[2].Connection);
-        Assert.Equal("A02-B02", rows[3].Connection);
+        Assert.Equal("C01-D01", rows[0].Connection);
+        Assert.Equal("C01-D01", rows[1].Connection);
+        Assert.Equal("C02-D02", rows[2].Connection);
+        Assert.Equal("C02-D02", rows[3].Connection);
     }
 
     /// <summary>Uz svaki kraj stoji žica kojoj pripada, pročitana kroz priključnu tabelu.</summary>
@@ -60,12 +60,46 @@ public class NetListaTests
         Assert.Equal(new[] { "BR", "BR", "PL", "PL" }, rows.Select(r => r.Wire));
     }
 
+    /// <summary>
+    /// Uz svaku tačku stoji par pinova u koji se kraj žice ukrcava na adapteru.
+    /// </summary>
+    /// <remarks>
+    /// Tačka „C01" znači konektor C, tačka 01, a njeni pinovi su A01 i B01 <b>tog</b> konektora.
+    /// Bez ove kolone operater vidi samo „C01" i nema odakle da zna u koja dva pina ukrcava kraj;
+    /// pin se čita sa plusom, da ne liči na net.
+    /// </remarks>
+    [Fact]
+    public void UzSvakuTacku_StojiParPinova()
+    {
+        IReadOnlyList<NetRow> rows = CableLayout.NetRows(DvozilniKabl(), run: null, runCable: null);
+
+        Assert.Equal(
+            new[] { "A01+B01", "A01+B01", "A02+B02", "A02+B02" },
+            rows.Select(r => r.Pins));
+    }
+
+    /// <summary>
+    /// Oba kraja iste žice moraju biti na različitim konektorima testera — inače žica nije
+    /// ispitana, a tester ćuti.
+    /// </summary>
+    [Fact]
+    public void KrajeviIsteZice_SuNaRazlicitimKonektorima()
+    {
+        IReadOnlyList<NetRow> rows = CableLayout.NetRows(DvozilniKabl(), run: null, runCable: null);
+
+        Assert.Equal('C', TestPoint.Parse(rows[0].Point).Connector);
+        Assert.Equal('D', TestPoint.Parse(rows[1].Point).Connector);
+
+        // Isti par pinova sa dva kraja NIJE greška: pinovi su lokalni za konektor.
+        Assert.Equal(rows[0].Pins, rows[1].Pins);
+    }
+
     /// <summary>Bez ožičenja se žica ne može znati; red i dalje postoji, sa „—".</summary>
     [Fact]
     public void BezOzicenja_ZicaOstajeNepoznata()
     {
         var kabl = new Cable { Id = 7, Code = "40-W9" };
-        kabl.Nets.Add(new CableNet { Ordinal = 1, Points = "A01-B01" });
+        kabl.Nets.Add(new CableNet { Ordinal = 1, Points = "C01-D01" });
 
         IReadOnlyList<NetRow> rows = CableLayout.NetRows(kabl, run: null, runCable: null);
 
@@ -86,6 +120,7 @@ public class NetListaTests
         NetRow red = Assert.Single(CableLayout.NetRows(kabl, run: null, runCable: null));
 
         Assert.Equal(NetRow.Unknown, red.Point);
+        Assert.Equal(NetRow.Unknown, red.Pins);
     }
 
     // -----------------------------------------------------------------------------------
@@ -115,14 +150,14 @@ public class NetListaTests
         Cable kabl = DvozilniKabl();
 
         var run = new TestRun { Passed = false };
-        run.Defects.Add(new TestDefect { Points = "A01-B01", Kind = DefectKind.Open });
+        run.Defects.Add(new TestDefect { Points = "C01-D01", Kind = DefectKind.Open });
 
         IReadOnlyList<NetRow> rows = CableLayout.NetRows(kabl, run, kabl);
 
-        Assert.Equal(NetRow.Failed, rows[0].Status);   // A01
-        Assert.Equal(NetRow.Failed, rows[1].Status);   // B01
-        Assert.Equal(NetRow.Passed, rows[2].Status);   // A02
-        Assert.Equal(NetRow.Passed, rows[3].Status);   // B02
+        Assert.Equal(NetRow.Failed, rows[0].Status);   // C01
+        Assert.Equal(NetRow.Failed, rows[1].Status);   // D01
+        Assert.Equal(NetRow.Passed, rows[2].Status);   // C02
+        Assert.Equal(NetRow.Passed, rows[3].Status);   // D02
     }
 
     [Fact]
@@ -148,7 +183,7 @@ public class NetListaTests
         IReadOnlyList<PortUsage> ports = CableLayout.Ports(DvozilniKabl());
 
         Assert.Equal(16, ports.Count);
-        Assert.Equal(new[] { 'A', 'B' }, ports.Where(p => p.Used).Select(p => p.Letter));
+        Assert.Equal(new[] { 'C', 'D' }, ports.Where(p => p.Used).Select(p => p.Letter));
         Assert.Equal(2, CableLayout.CountPorts(DvozilniKabl()));
     }
 
@@ -170,7 +205,7 @@ public class NetListaTests
     /// </summary>
     /// <remarks>
     /// Tester traži jedan <c>OSNet:</c> red po vezi, sa obe njene tačke. Kad bi se upisala po
-    /// jedna tačka u netu, tester bi tražio da su A01 i B01 razdvojeni — i oborio bi ispravan
+    /// jedna tačka u netu, tester bi tražio da su C01 i D01 razdvojeni — i oborio bi ispravan
     /// kabl. Zato ovde stoji broj 2, iako se na ekranu vide četiri neta.
     /// </remarks>
     [Fact]
@@ -181,8 +216,8 @@ public class NetListaTests
         string sadrzaj = new C61Generator(Sablon).Build(kabl.Nets.Select(n => n.ToNet()).ToArray());
 
         Assert.Contains(C61Generator.NetCountPrefix + "2", sadrzaj, StringComparison.Ordinal);
-        Assert.Contains(C61Generator.NetLinePrefix + "A01-B01", sadrzaj, StringComparison.Ordinal);
-        Assert.Contains(C61Generator.NetLinePrefix + "A02-B02", sadrzaj, StringComparison.Ordinal);
+        Assert.Contains(C61Generator.NetLinePrefix + "C01-D01", sadrzaj, StringComparison.Ordinal);
+        Assert.Contains(C61Generator.NetLinePrefix + "C02-D02", sadrzaj, StringComparison.Ordinal);
 
         // Četiri neta na ekranu, dva u fajlu.
         Assert.Equal(4, CableLayout.NetRows(kabl, null, null).Count);
@@ -203,16 +238,16 @@ public class NetListaTests
     {
         var kabl = new Cable { Id = 1, Code = "40-W1.1", SpecFileName = "40W1-1" };
 
-        kabl.Terminals.Add(new CableTerminal { Label = "DIN:1", TesterPoint = "A01" });
-        kabl.Terminals.Add(new CableTerminal { Label = "10XF:02", TesterPoint = "B01" });
-        kabl.Terminals.Add(new CableTerminal { Label = "DIN:2", TesterPoint = "A02" });
-        kabl.Terminals.Add(new CableTerminal { Label = "PAP", TesterPoint = "B02" });
+        kabl.Terminals.Add(new CableTerminal { Label = "DIN:1", TesterPoint = "C01" });
+        kabl.Terminals.Add(new CableTerminal { Label = "10XF:02", TesterPoint = "D01" });
+        kabl.Terminals.Add(new CableTerminal { Label = "DIN:2", TesterPoint = "C02" });
+        kabl.Terminals.Add(new CableTerminal { Label = "PAP", TesterPoint = "D02" });
 
         kabl.Wires.Add(new CableWire { WireNo = 1, Color = "BR", FromTerminal = "DIN:1", ToTerminal = "10XF:02" });
         kabl.Wires.Add(new CableWire { WireNo = 2, Color = "PL", FromTerminal = "DIN:2", ToTerminal = "PAP" });
 
-        kabl.Nets.Add(new CableNet { Ordinal = 1, Points = "A01-B01" });
-        kabl.Nets.Add(new CableNet { Ordinal = 2, Points = "A02-B02" });
+        kabl.Nets.Add(new CableNet { Ordinal = 1, Points = "C01-D01" });
+        kabl.Nets.Add(new CableNet { Ordinal = 2, Points = "C02-D02" });
 
         return kabl;
     }

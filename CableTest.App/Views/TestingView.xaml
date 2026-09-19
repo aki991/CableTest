@@ -777,15 +777,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="44" />
                                     <ColumnDefinition Width="66" />
+                                    <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="58" />
                                     <ColumnDefinition Width="98" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Net" Style="{StaticResource ZaglavljeTabeleStyle}" />
-                                <TextBlock Grid.Column="1" Text="Tačka" Style="{StaticResource ZaglavljeTabeleStyle}" />
-                                <TextBlock Grid.Column="2" Text="Žica" Style="{StaticResource ZaglavljeTabeleStyle}" />
-                                <TextBlock Grid.Column="3" Text="Veza" Style="{StaticResource ZaglavljeTabeleStyle}" />
-                                <TextBlock Grid.Column="4" Text="Stanje" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                <TextBlock Grid.Column="1" Text="Tačka" Style="{StaticResource ZaglavljeTabeleStyle}"
+                                           ToolTip="Konektor testera i broj tačke u njemu" />
+                                <TextBlock Grid.Column="2" Text="Pinovi" Style="{StaticResource ZaglavljeTabeleStyle}"
+                                           ToolTip="Par pinova tog konektora koji čini tačku" />
+                                <TextBlock Grid.Column="3" Text="Žica" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                <TextBlock Grid.Column="4" Text="Veza" Style="{StaticResource ZaglavljeTabeleStyle}" />
+                                <TextBlock Grid.Column="5" Text="Stanje" Style="{StaticResource ZaglavljeTabeleStyle}" />
                             </Grid>
                         </Border>
 
@@ -815,6 +819,7 @@
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="44" />
                                                         <ColumnDefinition Width="66" />
+                                                        <ColumnDefinition Width="90" />
                                                         <ColumnDefinition Width="58" />
                                                         <ColumnDefinition Width="98" />
                                                         <ColumnDefinition Width="*" />
@@ -824,15 +829,20 @@
                                                                Style="{StaticResource CelijaStyle}" />
                                                     <TextBlock Grid.Column="1" Text="{Binding Point}"
                                                                Style="{StaticResource CelijaJednoprostornaStyle}" />
-                                                    <TextBlock Grid.Column="2" Text="{Binding Wire}"
+                                                    <!-- Pinovi slede iz tačke, pa su prigušeni: podatak za
+                                                         ukrcavanje na adapteru, ne zaseban izbor. -->
+                                                    <TextBlock Grid.Column="2" Text="{Binding Pins}"
+                                                               Style="{StaticResource CelijaJednoprostornaStyle}"
+                                                               Foreground="{DynamicResource Tekst2Brush}" />
+                                                    <TextBlock Grid.Column="3" Text="{Binding Wire}"
                                                                Style="{StaticResource CelijaStyle}" />
                                                     <!-- Veza je ista za oba kraja iste žice — prigušena je,
                                                          da se u koloni vidi da idu u paru. -->
-                                                    <TextBlock Grid.Column="3" Text="{Binding Connection}"
+                                                    <TextBlock Grid.Column="4" Text="{Binding Connection}"
                                                                Style="{StaticResource CelijaJednoprostornaStyle}"
                                                                Foreground="{DynamicResource Tekst2Brush}" />
 
-                                                    <StackPanel Grid.Column="4" Orientation="Horizontal">
+                                                    <StackPanel Grid.Column="5" Orientation="Horizontal">
                                                         <Path Width="15" Height="15" Stretch="Uniform"
                                                               StrokeThickness="1.8" StrokeStartLineCap="Round"
                                                               StrokeEndLineCap="Round" StrokeLineJoin="Round"

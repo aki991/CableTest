@@ -208,7 +208,8 @@
                     <thead>
                         <tr>
                             <th>Net</th>
-                            <th>Tačka</th>
+                            <th title="Konektor testera i broj tačke u njemu">Tačka</th>
+                            <th title="Par pinova tog konektora koji čini tačku">Pinovi</th>
                             <th>Žica</th>
                             <th>Veza</th>
                             <th>Stanje</th>
@@ -218,7 +219,7 @@
                         @if (Testing.NetRows.Count == 0)
                         {
                             <tr>
-                                <td colspan="5" style="color:var(--tekst-3); text-align:center; padding:22px">
+                                <td colspan="6" style="color:var(--tekst-3); text-align:center; padding:22px">
                                     Izaberi kabl da bi se prikazala net lista.
                                 </td>
                             </tr>
@@ -230,6 +231,7 @@
                                 <tr title="@row.Description">
                                     <td>@row.Ordinal</td>
                                     <td class="jednoprostorni">@row.Point</td>
+                                    <td class="jednoprostorni" style="color:var(--tekst-2)">@row.Pins</td>
                                     <td>@row.Wire</td>
                                     <td class="jednoprostorni">@row.Connection</td>
                                     <td>

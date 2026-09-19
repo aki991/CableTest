@@ -364,8 +364,8 @@ public sealed class TestingViewModelTests : IDisposable
         // kabl bira izričito — katalog ima 55 kablova i prvi u spisku nije ovaj.
         vm.SelectedCable = vm.Cables.First(c => c.SpecFileName == "M40W1-1");
 
-        // Tačke pripadaju izabranom kablu: A01 i A02 su njegova prva dva terminala.
-        _gateway.ReceiveFail(Kabl(), "SHORT A01-A02");
+        // Tačke pripadaju izabranom kablu: C01 i C02 su njegova prva dva terminala.
+        _gateway.ReceiveFail(Kabl(), "SHORT C01-C02");
 
         Assert.Equal(OutcomeState.Fail, vm.Outcome);
         Assert.True(vm.HasFailedNets);

@@ -1,15 +1,15 @@
 namespace CableTest.Core.Model;
 
-/// <summary>Jedan port testera (A..P) u mapi pinova jednog kabla.</summary>
-/// <param name="Letter">Slovo porta.</param>
-/// <param name="Used">Da li kabl koristi bar jednu ispitnu tačku tog porta.</param>
-/// <param name="PointCount">Koliko tačaka tog porta kabl koristi.</param>
+/// <summary>Jedan konektor testera (A..P) u mapi jednog kabla.</summary>
+/// <param name="Letter">Slovo konektora.</param>
+/// <param name="Used">Da li kabl koristi bar jednu ispitnu tačku tog konektora.</param>
+/// <param name="PointCount">Koliko tačaka tog konektora kabl koristi.</param>
 public sealed record PortUsage(char Letter, bool Used, int PointCount)
 {
-    /// <summary>Opis za oblačić iznad pina.</summary>
+    /// <summary>Opis za oblačić iznad konektora.</summary>
     public string Description => Used
-        ? $"Port {Letter} — kabl koristi {PointCount} ispitnih tačaka"
-        : $"Port {Letter} — kabl ga ne koristi";
+        ? $"Konektor {Letter} — kabl koristi {PointCount} ispitnih tačaka"
+        : $"Konektor {Letter} — kabl ga ne koristi";
 }
 
 /// <summary>
@@ -22,21 +22,29 @@ public sealed record PortUsage(char Letter, bool Used, int PointCount)
 /// </para>
 /// <para>
 /// U modelu i u .c61 fajlu <see cref="CableNet"/> znači nešto drugo — grupu međusobno spojenih
-/// tačaka („A01-B01"), jednu po žici. To se NE menja: tester traži baš takvu net listu, a
-/// program sa po jednom tačkom u netu tražio bi da su A01 i B01 razdvojeni i oborio bi ispravan
-/// kabl. Ovaj red je zato samo prikaz — jedan <see cref="CableNet"/> daje onoliko redova koliko
-/// ima tačaka, a svi nose isti <see cref="Connection"/> i isti ishod.
+/// tačaka („C01-D01"), jednu po žici. To se NE menja: tester traži baš takvu net listu, a
+/// program sa po jednom tačkom u netu ne bi ispitao ništa. Ovaj red je zato samo prikaz — jedan
+/// <see cref="CableNet"/> daje onoliko redova koliko ima tačaka, a svi nose isti
+/// <see cref="Connection"/> i isti ishod.
+/// </para>
+/// <para>
+/// Kolona <see cref="Pins"/> postoji zbog zamke u oznakama: „C01" je <b>tačka</b> 01 konektora
+/// C, a pinovi te tačke su „A01" i „B01" istog konektora. Bez te kolone operater vidi samo
+/// „C01" i nema odakle da zna u koja dva pina adaptera ukrcava kraj žice; vidi
+/// <see cref="TestPoint.Pins"/>.
 /// </para>
 /// </remarks>
 /// <param name="Ordinal">Redni broj reda.</param>
-/// <param name="Point">Tačka testera tog kraja, npr. „A01".</param>
+/// <param name="Point">Tačka testera tog kraja, npr. „C01" — konektor C, tačka 01.</param>
+/// <param name="Pins">Par pinova te tačke u istom konektoru, npr. „A01+B01"; „—" kad se ne zna.</param>
 /// <param name="Wire">Oznaka žice kojoj kraj pripada, npr. „BR"; „—" kad se ne zna.</param>
-/// <param name="Connection">Veza kojoj kraj pripada, npr. „A01-B01".</param>
+/// <param name="Connection">Veza kojoj kraj pripada, npr. „C01-D01".</param>
 /// <param name="Status">„PROŠAO", „PAO" ili „—" dok rezultata nema.</param>
 /// <param name="Defect">Opis greške na toj vezi; prazno ako greške nema.</param>
 public sealed record NetRow(
     int Ordinal,
     string Point,
+    string Pins,
     string Wire,
     string Connection,
     string Status,
@@ -55,8 +63,23 @@ public sealed record NetRow(
 
     public bool IsFailed => Status == Failed;
 
-    /// <summary>Tekst oblačića: greška ako je ima, inače cela veza kojoj kraj pripada.</summary>
-    public string Description => Defect.Length > 0 ? Defect : Connection;
+    /// <summary>
+    /// Tekst oblačića: greška ako je ima, inače gde se kraj ukrcava i kojoj vezi pripada.
+    /// </summary>
+    public string Description
+    {
+        get
+        {
+            if (Defect.Length > 0)
+            {
+                return Defect;
+            }
+
+            return TestPoint.TryParse(Point, out TestPoint point)
+                ? $"{point.Describe()} · veza {Connection}"
+                : Connection;
+        }
+    }
 }
 
 /// <summary>
@@ -213,18 +236,30 @@ public static class CableLayout
                 // Net bez ijedne tačke ne bi trebalo da postoji, ali ako se nađe u starijem
                 // zapisu, mora da se vidi. Prećutno izostavljen red značio bi net koji niko ne
                 // ispituje, a niko i ne primećuje da nedostaje.
-                rows.Add(new NetRow(++ordinal, NetRow.Unknown, NetRow.Unknown, net.Points, status, defect));
+                rows.Add(new NetRow(
+                    ++ordinal, NetRow.Unknown, NetRow.Unknown, NetRow.Unknown, net.Points, status, defect));
                 continue;
             }
 
             foreach (string point in points)
             {
-                rows.Add(new NetRow(++ordinal, point, WireOf(cable, point), net.Points, status, defect));
+                rows.Add(new NetRow(
+                    ++ordinal, point, PinsOf(point), WireOf(cable, point), net.Points, status, defect));
             }
         }
 
         return rows;
     }
+
+    /// <summary>
+    /// Par pinova zadate tačke, npr. „A01+B01" za tačku „C01"; „—" kad oznaka nije ispravna.
+    /// </summary>
+    /// <remarks>
+    /// Par ne bira niko — sledi iz same tačke: oba pina su u istom konektoru i nose njen broj.
+    /// Zato ovde nema ni baze ni dodele, nego samo <see cref="TestPoint.Pins"/>.
+    /// </remarks>
+    public static string PinsOf(string? point)
+        => TestPoint.TryParse(point, out TestPoint parsed) ? parsed.Pins : NetRow.Unknown;
 
     /// <summary>
     /// Oznaka žice čiji je kraj na zadatoj tački testera; „—" kad se ne zna.

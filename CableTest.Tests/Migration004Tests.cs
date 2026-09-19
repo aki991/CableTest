@@ -129,7 +129,8 @@ public sealed class Migration004Tests : IDisposable
         Cable cable = cables.GetBySpecFileName("M40W1-1")!;
 
         Assert.Equal("=M40-W1.1", cable.Designation);
-        Assert.Equal(new[] { "A01-B01", "A02-B02" }, cable.Nets.Select(n => n.Points));
+        // Migracija 006 je krajeve ovog kabla prebacila na konektore C i D.
+        Assert.Equal(new[] { "C01-D01", "C02-D02" }, cable.Nets.Select(n => n.Points));
         Assert.Null(cables.GetBySpecFileName("40W1-1"));
     }
 
